@@ -2,6 +2,9 @@
 title: "Category Theory: What Is A Category?"
 pubDate: 2024-11-29
 description: "From a functional programming perspective, category theory is a branch of mathematics that serves a purpose similar to what patterns do in object-oriented pr…"
+heroImage: "/images/covers/429c4679f093.jpg"
+heroImagePosition: 0.4263
+icon: "🥧"
 ---
 From a functional programming perspective, category theory is a branch of mathematics that serves a purpose similar to what patterns do in object-oriented programming. That is, categories provide a set of patterns or ideas that provide implementation recipes. This is an opinionated definition that will hopefully bear out in future articles.
 
@@ -31,11 +34,15 @@ As Keith Devlin explains in his *Mathematical Thinking* book, math learned in hi
 
 A good example is the evolution of the *function.* A function as a calculation tool is an equation:
 
-$f(x) = x^2 + 3x - 5$
+$$
+f(x) = x^2 + 3x - 5
+$$
 
 But as a conceptual topic, a function can be almost anything. As an example, a function can be described in plain language:
 
-$f(x) = \begin{cases} 1 &\text{if } x &\text{is rational} \\ 0 &\text{if } x &\text{is irrational} \end{cases}$ 
+$$
+f(x) = \begin{cases} 1 &\text{if } x &\text{is rational} \\ 0 &\text{if } x &\text{is irrational} \end{cases}
+$$
 
 The former is used to compute values.  The latter is a concept for mapping numbers to booleans.  As Mr. Devlin says, “Try graphing that monster [function]!”.
 

@@ -24,7 +24,7 @@ function addClass(node, cls) {
 
 export default function rehypeNotionClasses() {
   return (tree) => {
-    visit(tree, 'element', (node) => {
+    visit(tree, 'element', (node, _index, parent) => {
       const cls = TAG_CLASS[node.tagName];
       if (cls) addClass(node, cls);
 
@@ -34,8 +34,14 @@ export default function rehypeNotionClasses() {
       // Standalone code blocks: <pre><code> → wrap class for the Notion code look
       if (node.tagName === 'pre') addClass(node, 'notion-code');
 
-      // Inline code (a <code> not inside a <pre>)
-      if (node.tagName === 'code' && !node.properties?.className) {
+      // Inline code only — a <code> whose parent is NOT a <pre>. The <code>
+      // Shiki emits inside a <pre> must stay unstyled, or the inline-code
+      // background paints behind the text instead of filling the block.
+      if (
+        node.tagName === 'code' &&
+        parent?.tagName !== 'pre' &&
+        !node.properties?.className
+      ) {
         addClass(node, 'notion-inline-code');
       }
     });

@@ -3,6 +3,8 @@ title: "Staff Engineer Book Review, Part 1"
 pubDate: 2024-11-29
 updatedDate: 2024-12-11
 description: "The last couple of years have seen more attention paid to the Staff+ tier of technical positions. A couple of books in particular, Staff Engineer by Will Lar…"
+heroImage: "/images/covers/db9b116d4db0.jpg"
+heroImagePosition: 0.7628
 ---
 The last couple of years have seen more attention paid to the Staff+ tier of technical positions. A couple of books in particular, [Staff Engineer by Will Larson](https://www.amazon.com/Staff-Engineer-Leadership-beyond-management-ebook/dp/B08RMSHYGG/) and [The Staff Engineer’s Path by Tanya Reilly](https://www.amazon.com/Staff-Engineers-Path-Tanya-Reilly-ebook/dp/B0BG16Y553/), have been published to try and steer the conversation.
 

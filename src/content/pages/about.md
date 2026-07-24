@@ -3,6 +3,9 @@ title: "About"
 pubDate: 2024-11-24
 updatedDate: 2025-12-03
 description: "My name is Jay Kint."
+heroImage: "/images/covers/582b8bf9d8bd.jpg"
+heroImagePosition: 0.3667
+icon: "👋"
 ---
 My name is Jay Kint.
 

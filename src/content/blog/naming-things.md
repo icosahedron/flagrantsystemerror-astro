@@ -3,6 +3,8 @@ title: "Review of Naming Things by Tom Benner"
 pubDate: 2024-11-27
 updatedDate: 2024-11-29
 description: "Billed as the solution to the hardest problem in Computer Science, it doesn’t quite deliver on that promise."
+heroImage: "/images/covers/c43a0e443cb2.jpg"
+heroImagePosition: 0.2
 ---
 Billed as the solution to the hardest problem in Computer Science, it doesn’t quite deliver on that promise.
 

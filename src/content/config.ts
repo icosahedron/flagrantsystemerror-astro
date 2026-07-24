@@ -8,6 +8,8 @@ const blog = defineCollection({
 		pubDate: z.coerce.date(),
 		updatedDate: z.coerce.date().optional(),
 		heroImage: z.string().optional(),
+		heroImagePosition: z.number().optional(),
+		icon: z.string().optional(),
 	}),
 });
 
@@ -20,6 +22,9 @@ const pages = defineCollection({
 		description: z.string().optional(),
 		pubDate: z.coerce.date().optional(),
 		updatedDate: z.coerce.date().optional(),
+		heroImage: z.string().optional(),
+		heroImagePosition: z.number().optional(),
+		icon: z.string().optional(),
 	}),
 });
 

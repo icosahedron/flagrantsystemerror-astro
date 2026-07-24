@@ -29,6 +29,28 @@
   margin-block: 0;
 }
 
+/* Shiki sets an inline `background-color` on the <pre> from its theme (white for
+   github-light), which overrides the vendored .notion-code gray block. Force the
+   Notion code-block background so the whole block is filled, not just the text.
+   !important is needed to beat Shiki's inline style. */
+.notion .notion-code {
+  background: var(--bg-color-1) !important;
+}
+
+/* Blockquotes hit the same two issues as lists. The vendored .notion-quote uses
+   `white-space: pre-wrap`, so the newlines Markdown puts around the inner
+   <p class="notion-text"> render as blank lines above and below the text. And
+   its 1.2em font runs larger than body copy. Collapse the whitespace, drop the
+   inner paragraph's own spacing, and match the body size. */
+.notion-quote {
+  white-space: normal;
+  font-size: 1em;
+}
+.notion-quote > .notion-text {
+  margin: 0;
+  padding: 0;
+}
+
 /* Images. Markdown emits a bare <img>, which gets none of react-notion-x's
    asset-wrapper sizing/centering. The :::figure directive wraps them; center
    the image, cap its width so diagrams aren't upscaled, and style the caption. */

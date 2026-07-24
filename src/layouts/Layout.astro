@@ -8,13 +8,19 @@ interface Props {
 	title?: string;
 	description?: string;
 	coverImage?: string;
+	coverPosition?: number;
 }
 
 const {
 	title,
 	description = SITE_DESCRIPTION,
 	coverImage,
+	coverPosition = 0.5,
 } = Astro.props;
+
+// Notion stores the cover's focal point as a fraction from the top;
+// react-notion-x maps it to object-position with (1 - position).
+const coverObjectPosition = `center ${((1 - coverPosition) * 100).toFixed(2)}%`;
 
 const pageTitle = title ? `${title} — ${SITE_TITLE}` : SITE_TITLE;
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -54,8 +60,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </nav>
 
     {coverImage && (
-      <div class="cover-image">
-        <img src={coverImage} alt="" />
+      <div class="notion-page-cover-wrapper">
+        <img
+          class="notion-page-cover"
+          src={coverImage}
+          alt=""
+          style={`object-position: ${coverObjectPosition}`}
+        />
       </div>
     )}
 
@@ -96,18 +107,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   }
   .nav-left a { font-weight: 700; margin-left: 0; }
   .nav-right a:first-child { margin-left: 0; }
-  .cover-image {
-    width: 100%;
-    max-height: 280px;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .cover-image img {
-    width: 100%;
-    object-fit: cover;
-    object-position: center;
+  .notion-page-cover-wrapper {
+    margin-top: 1rem;
   }
   main.notion {
     padding: 1rem 2rem 4rem;

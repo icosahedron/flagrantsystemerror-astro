@@ -3,6 +3,7 @@ title: "Colophon"
 pubDate: 2024-11-24
 updatedDate: 2024-12-09
 description: "Flagrant System Error is curated from the following tools:"
+icon: "📕"
 ---
 Flagrant System Error is curated from the following tools:
 

@@ -12,9 +12,13 @@ const { post, showMeta = true } = Astro.props;
 const { title, description } = post.data;
 const pubDate = 'pubDate' in post.data ? post.data.pubDate : undefined;
 const updatedDate = 'updatedDate' in post.data ? post.data.updatedDate : undefined;
+const heroImage = 'heroImage' in post.data ? post.data.heroImage : undefined;
+const heroImagePosition = 'heroImagePosition' in post.data ? post.data.heroImagePosition : undefined;
+const icon = 'icon' in post.data ? post.data.icon : undefined;
 ---
-<Layout title={title} description={description}>
-  <article class="notion-page-content-inner">
+<Layout title={title} description={description} coverImage={heroImage} coverPosition={heroImagePosition}>
+  <article class:list={['notion-page-content-inner', { 'has-cover': heroImage }]}>
+    {icon && <div class="page-icon" role="img">{icon}</div>}
     <h1 class="notion-title">{title}</h1>
     {showMeta && pubDate && (
       <div class="post-meta">
@@ -29,6 +33,15 @@ const updatedDate = 'updatedDate' in post.data ? post.data.updatedDate : undefin
 </Layout>
 
 <style>
+  /* Notion overlaps the page icon on the bottom-left of the cover. */
+  .page-icon {
+    font-size: 64px;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .has-cover .page-icon {
+    margin-top: -3rem;
+  }
   .notion-title {
     font-size: 2.5rem;
     font-weight: 700;

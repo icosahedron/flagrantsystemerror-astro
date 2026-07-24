@@ -55,6 +55,9 @@ Body goes here.
 ## Importing from Notion
 
 `scripts/notion-export.py` re-exports the original Notion pages to Markdown and
-downloads their images. It talks to Notion's public API and needs no auth for a
-public page. Slugs of already-published posts are pinned in the script's
-`SLUG_OVERRIDE` map so existing URLs keep working.
+downloads their images. `scripts/fetch-covers.py` downloads each page's Notion
+cover image into `public/images/covers/` and injects `heroImage` +
+`heroImagePosition` (the crop focal point) into the post frontmatter. Both talk
+to Notion's public API and need no auth for a public page. Slugs of
+already-published posts are pinned in each script's `SLUG_OVERRIDE` map so
+existing URLs keep working.

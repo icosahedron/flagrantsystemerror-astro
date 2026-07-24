@@ -2,6 +2,8 @@
 title: "The Pyramid Principle for Writing"
 pubDate: 2024-11-29
 description: "The Pyramid Principlehttps://www.amazon.com/Pyramid-Principle-Logic-Writing-Thinking/dp/1292372265/ by Barbara Minto is a very short book on writing and thin…"
+heroImage: "/images/covers/ebb175b7d8ad.jpg"
+heroImagePosition: 0.6621
 ---
 [The Pyramid Principle](https://www.amazon.com/Pyramid-Principle-Logic-Writing-Thinking/dp/1292372265/) by Barbara Minto is a very short book on writing and thinking in a structured and logical manner. This review focuses on the first half of the book, which deals with how to structure writing.
 

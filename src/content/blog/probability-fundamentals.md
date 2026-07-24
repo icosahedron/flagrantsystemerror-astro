@@ -3,6 +3,8 @@ title: "Probability: Fundamentals"
 pubDate: 2025-12-10
 updatedDate: 2026-07-23
 description: "Probability deals with likelihoods of events occurring or a member of a population matching some criteria. For example, given a fair coin, 50% of the time it…"
+heroImage: "/images/covers/cf33f8697d93.jpg"
+heroImagePosition: 0.3394
 ---
 ## Probability: Fundamentals
 
@@ -20,11 +22,15 @@ The notation for sets is pretty arbitrary. Each set is typically represented by 
 
 If we want to say that a particular element is a member of a set, we use the symbol $\in$, like $x$ being in set $T$ as
 
-$x \in T$
+$$
+x \in T
+$$
 
 or John liking peanut butter sandwiches as
 
-$John \in P$
+$$
+John \in P
+$$
 
 To represent the probability of an event or membership in a set, we simply wrap the name of the set as P(name of set). So our sandwich set probabilities would be *P(P)* and *P(T), *for Peanut butter and Tuna respectively. Again, these letters are arbitrary, but the function P is standard way to express the probability.
 
@@ -66,7 +72,9 @@ So we have 3 sets for the sandwich shop:
 
 How do we express that S is the combination of P and T? This is the union operator.
 
-$S = P \cup T$
+$$
+S = P \cup T
+$$
 
 This means that a new set is created by combining the elements of P with the elements of T.
 
@@ -76,7 +84,9 @@ Let’s say that T = {Alice, Bob, Carmen} and P = {Alice, Doug, and Emily}, so t
 
 Again, we have the set of each sandwich type, T, and P. How do we show if there is any overlap between people who like peanut butter and tuna sandwiches. This is the intersection operator does, $\cap$. Let’s say that B is the set of people who like both tuna and peanut butter:
 
-$B = P \cap T$
+$$
+B = P \cap T
+$$
 
 In our example above in Unions, the intersection of T and P would be *{ Alice }*, since she is the only one listed in both sets.
 

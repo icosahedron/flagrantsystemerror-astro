@@ -131,7 +131,15 @@ def render_blocks(ids, blocks, depth=0):
         if t != "numbered_list": num = 0
 
         if t == "text":
-            lines.append(text); lines.append("")
+            # A text block that is nothing but a single inline equation was an
+            # equation placed on its own line: promote to display math so it
+            # renders centered, the way Notion shows a block equation.
+            s = text.strip()
+            if s.startswith("$") and s.endswith("$") and not s.startswith("$$") and s.count("$") == 2:
+                lines.append(f"$$\n{s[1:-1].strip()}\n$$")
+            else:
+                lines.append(text)
+            lines.append("")
         elif t == "header":
             lines.append(f"# {text}"); lines.append("")
         elif t == "sub_header":

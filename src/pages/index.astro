@@ -14,12 +14,26 @@ const posts = (await getCollection('blog')).sort(
     {posts.map((post) => (
       <li class="post-item">
         <a href={`/${post.slug}/`} class="post-link">
-          <span class="post-title">{post.data.title}</span>
-          {post.data.description && (
-            <span class="post-desc">{post.data.description}</span>
+          {post.data.heroImage && (
+            <img
+              class="post-thumb"
+              src={post.data.heroImage}
+              alt=""
+              loading="lazy"
+              style={`object-position: center ${((1 - (post.data.heroImagePosition ?? 0.5)) * 100).toFixed(2)}%`}
+            />
           )}
+          <span class="post-body">
+            <span class="post-title">
+              {post.data.icon && <span class="post-icon">{post.data.icon}</span>}
+              {post.data.title}
+            </span>
+            {post.data.description && (
+              <span class="post-desc">{post.data.description}</span>
+            )}
+            <FormattedDate date={post.data.pubDate} />
+          </span>
         </a>
-        <FormattedDate date={post.data.pubDate} />
       </li>
     ))}
   </ul>
@@ -32,9 +46,6 @@ const posts = (await getCollection('blog')).sort(
     margin: 0;
   }
   .post-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
     padding: 0.9rem 0;
     border-bottom: 1px solid var(--fg-color-0, rgba(55, 53, 47, 0.09));
   }
@@ -42,12 +53,29 @@ const posts = (await getCollection('blog')).sort(
     text-decoration: none;
     color: inherit;
     display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .post-thumb {
+    flex: 0 0 auto;
+    width: 120px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: var(--fg-color-0, rgba(55, 53, 47, 0.09));
+  }
+  .post-body {
+    display: flex;
     flex-direction: column;
     gap: 0.15rem;
+    min-width: 0;
   }
   .post-title {
     font-weight: 600;
     font-size: 1.15rem;
+  }
+  .post-icon {
+    margin-right: 0.4rem;
   }
   .post-link:hover .post-title {
     text-decoration: underline;
@@ -60,5 +88,8 @@ const posts = (await getCollection('blog')).sort(
     color: var(--fg-color-2, rgba(55, 53, 47, 0.4));
     font-size: 0.8rem;
     margin-top: 0.2rem;
+  }
+  @media (max-width: 520px) {
+    .post-thumb { width: 84px; height: 60px; }
   }
 </style>

@@ -2,6 +2,9 @@
 title: "Category Theory: Programming Language Semantics"
 pubDate: 2024-11-29
 description: "While watching video 2.1 of the Category Theory series, Bartosz briefly mentions semantics of programming languages. But what are these semantics?"
+heroImage: "/images/covers/c1c7f0e68786.jpg"
+heroImagePosition: 0
+icon: "🎴"
 ---
 While watching video 2.1 of the Category Theory series, Bartosz briefly mentions semantics of programming languages. But what are these semantics?
 

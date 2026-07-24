@@ -3,6 +3,9 @@ title: "Smarter Faster Better"
 pubDate: 2026-07-21
 updatedDate: 2026-07-23
 description: "Book review time."
+heroImage: "/images/covers/4816ee38f933.jpg"
+heroImagePosition: 0.4
+icon: "📘"
 ---
 Book review time.
 

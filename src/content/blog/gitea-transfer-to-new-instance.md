@@ -2,6 +2,8 @@
 title: "Gitea Transfer to New Instance"
 pubDate: 2024-12-21
 description: "This article describes how to move a Giteahttps://about.gitea.com instance from one docker container to another. I thought that simply copying the mounted vo…"
+heroImage: "/images/covers/e9dca569a152.jpg"
+heroImagePosition: 0.3068
 ---
 This article describes how to move a [Gitea](https://about.gitea.com) instance from one docker container to another. I thought that simply copying the mounted volume directory would be sufficient, but apparently isn’t.
 

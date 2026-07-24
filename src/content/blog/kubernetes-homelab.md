@@ -3,6 +3,9 @@ title: "Experimenting with Kubernetes"
 pubDate: 2024-11-24
 updatedDate: 2024-12-09
 description: "Setting up a Kubernetes cluster is a rewarding way to deepen your understanding of container orchestration. For those exploring Kubernetes for the first time…"
+heroImage: "/images/covers/2a2899518735.jpg"
+heroImagePosition: 0.5
+icon: "👨‍💻"
 ---
 Setting up a Kubernetes cluster is a rewarding way to deepen your understanding of container orchestration. For those exploring Kubernetes for the first time or looking to experiment in a controlled environment, using [Kind](https://kind.sigs.k8s.io) (Kubernetes IN Docker) offers a straightforward and lightweight solution. Kind allows you to create Kubernetes clusters within Docker containers, making it ideal for homelabs, local testing, and experimentation.
 
