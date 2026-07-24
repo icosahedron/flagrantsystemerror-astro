@@ -1,0 +1,56 @@
+/* Overrides that bridge Astro's Markdown HTML to the vendored react-notion-x
+   stylesheet. Kept separate from notion.css so that file stays a clean vendor
+   copy. Loaded after notion.css so these rules win. */
+
+/* The vendored .notion-list li rule uses `white-space: pre-wrap`, meant for
+   Notion's own markup where a list item holds text directly. Markdown instead
+   emits `<li>\n<p>…</p>\n</li>`, so pre-wrap renders those formatting newlines
+   as real line breaks — dropping the text a full line below its marker. Collapse
+   that whitespace back to normal. (This is the fix; the box model shows nothing
+   because the gap is rendered whitespace, not margin or padding.) */
+.notion-list li {
+  white-space: normal;
+}
+
+/* Markdown wraps each list item's text in a block-level <p class="notion-text">.
+   Because .notion-text is width:100% display:block, it still drops onto its own
+   line below the marker. Render the item's paragraph inline so the text sits
+   beside its marker, the way react-notion-x renders lists. */
+.notion-list li > .notion-text {
+  display: inline;
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+
+/* A nested list should hug its parent item, not inherit the top/bottom margin
+   that .notion-list adds to a standalone list. */
+.notion-list li > .notion-list {
+  margin-block: 0;
+}
+
+/* Images. Markdown emits a bare <img>, which gets none of react-notion-x's
+   asset-wrapper sizing/centering. The :::figure directive wraps them; center
+   the image, cap its width so diagrams aren't upscaled, and style the caption. */
+.notion-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1.5rem 0;
+}
+.notion-figure img {
+  max-width: 100%;
+  height: auto;
+}
+.notion-figure figcaption {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+.notion-figure figcaption > .notion-text {
+  display: inline;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  color: var(--fg-color-3, rgba(55, 53, 47, 0.6));
+  font-size: 14px;
+}

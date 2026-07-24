@@ -1,68 +1,60 @@
-# Astro Starter Kit: Blog
+# Flagrant System Error
 
-```sh
-npm create astro@latest -- --template blog
+The blog at [flagrantsystemerror.com](https://flagrantsystemerror.com), built with
+[Astro](https://astro.build) as a fully static site. Content lives as Markdown in
+this repo; there is no server and no build-time dependency on Notion.
+
+## How it works
+
+Posts are Markdown files in `src/content/blog/`. They render with the
+**look and feel of Notion** without shipping the Notion renderer:
+
+- `src/styles/notion.css` — the `react-notion-x` stylesheet, vendored. It also
+  follows the OS light/dark preference via `prefers-color-scheme`.
+- `src/plugins/rehype-notion-classes.mjs` — stamps `notion-*` class names onto
+  the HTML that Markdown compiles to (`<p>` → `.notion-text`, etc.) so the
+  vendored CSS applies.
+- `src/plugins/remark-notion-directives.mjs` — renders `:::callout`,
+  `:::bookmark`, and `:::embed` container directives into Notion-styled markup.
+- Math (`$inline$` and `$$block$$`) renders with KaTeX.
+
+## Develop
+
+```bash
+npm install
+npm run dev        # http://localhost:4321
+npm run build      # type-checks, then outputs static site to dist/
+npm run preview    # serve the built dist/ locally
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/blog)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/blog)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/blog/devcontainer.json)
+## Deploy
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+`dist/` is a plain static site — upload it anywhere that serves files:
 
-![blog](https://github.com/withastro/astro/assets/2244813/ff10799f-a816-4703-b967-c78997e8323d)
-
-Features:
-
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-├── public/
-├── src/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
+```bash
+npm run build
+rsync -avz dist/ user@server:/var/www/flagrantsystemerror/
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Writing a new post
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Add a Markdown file to `src/content/blog/`. The filename is the URL slug.
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+```markdown
+---
+title: "My Post Title"
+pubDate: 2026-07-24
+description: "One-line summary for the index and RSS."
+---
 
-Any static assets, like images, can be placed in the `public/` directory.
+Body goes here.
+```
 
-## 🧞 Commands
+`src/content/pages/` holds standalone pages (About, Colophon), authored the same way.
 
-All commands are run from the root of the project, from a terminal:
+## Importing from Notion
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+`scripts/notion-export.py` re-exports the original Notion pages to Markdown and
+downloads their images. It talks to Notion's public API and needs no auth for a
+public page. Slugs of already-published posts are pinned in the script's
+`SLUG_OVERRIDE` map so existing URLs keep working.

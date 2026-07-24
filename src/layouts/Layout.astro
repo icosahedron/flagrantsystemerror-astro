@@ -1,0 +1,120 @@
+---
+import '../styles/notion.css';
+import '../styles/notion-overrides.css';
+import 'katex/dist/katex.min.css';
+import { SITE_TITLE, SITE_DESCRIPTION, NAV_LINKS } from '../consts';
+
+interface Props {
+	title?: string;
+	description?: string;
+	coverImage?: string;
+}
+
+const {
+	title,
+	description = SITE_DESCRIPTION,
+	coverImage,
+} = Astro.props;
+
+const pageTitle = title ? `${title} — ${SITE_TITLE}` : SITE_TITLE;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href="/rss.xml" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title ?? SITE_TITLE} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <nav class="site-nav">
+      <div class="nav-left">
+        <a href="/"><strong>{SITE_TITLE}</strong></a>
+      </div>
+      <div class="nav-right">
+        {NAV_LINKS.map((link) => <a href={link.href}>{link.label}</a>)}
+      </div>
+    </nav>
+
+    {coverImage && (
+      <div class="cover-image">
+        <img src={coverImage} alt="" />
+      </div>
+    )}
+
+    <main class="notion">
+      <div class="notion-page notion-page-content-has-aside">
+        <div class="notion-page-content notion-page-content-inner">
+          <slot />
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --page-max-width: 720px;
+  }
+  body {
+    margin: 0;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    background-color: var(--bg-color, #fff);
+    color: var(--fg-color, rgb(55, 53, 47));
+  }
+  .site-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--fg-color-0, #e0e0e0);
+    max-width: var(--page-max-width);
+    margin: 0 auto;
+  }
+  .site-nav a {
+    text-decoration: none;
+    color: inherit;
+    margin-left: 1.5rem;
+    font-size: 1rem;
+  }
+  .nav-left a { font-weight: 700; margin-left: 0; }
+  .nav-right a:first-child { margin-left: 0; }
+  .cover-image {
+    width: 100%;
+    max-height: 280px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .cover-image img {
+    width: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+  main.notion {
+    padding: 1rem 2rem 4rem;
+  }
+  main.notion .notion-page-content {
+    max-width: var(--page-max-width);
+    margin: 0 auto;
+    padding: 0;
+  }
+</style>

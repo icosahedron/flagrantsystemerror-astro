@@ -2,15 +2,25 @@ import { defineCollection, z } from 'astro:content';
 
 const blog = defineCollection({
 	type: 'content',
-	// Type-check frontmatter using a schema
 	schema: z.object({
 		title: z.string(),
-		description: z.string(),
-		// Transform string to Date object
+		description: z.string().optional(),
 		pubDate: z.coerce.date(),
 		updatedDate: z.coerce.date().optional(),
 		heroImage: z.string().optional(),
 	}),
 });
 
-export const collections = { blog };
+// Standalone pages (About, Colophon): authored like posts but kept out of
+// the blog index and RSS feed.
+const pages = defineCollection({
+	type: 'content',
+	schema: z.object({
+		title: z.string(),
+		description: z.string().optional(),
+		pubDate: z.coerce.date().optional(),
+		updatedDate: z.coerce.date().optional(),
+	}),
+});
+
+export const collections = { blog, pages };

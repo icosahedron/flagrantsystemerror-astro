@@ -1,0 +1,10 @@
+---
+import { getEntry } from 'astro:content';
+import BlogPost from '../layouts/BlogPost.astro';
+
+const page = await getEntry('pages', 'colophon');
+const { Content } = await page.render();
+---
+<BlogPost post={page} showMeta={false}>
+  <Content />
+</BlogPost>
