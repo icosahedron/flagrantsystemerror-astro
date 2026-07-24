@@ -3,8 +3,9 @@
 import json, os, re, sys, urllib.request, urllib.parse, hashlib, collections, datetime
 
 ROOT = "148786cf-a010-80f9-824f-f694cae70443"
-OUT_MD  = os.environ.get("OUT_MD",  "out/blog")
-OUT_IMG = os.environ.get("OUT_IMG", "out/images")
+OUT_MD  = os.environ.get("OUT_MD",  "src/content/blog")
+OUT_IMG = os.environ.get("OUT_IMG", "public/images/posts")
+OUT_PAGES = os.environ.get("OUT_PAGES", "src/content/pages")
 IMG_PUBLIC_PREFIX = "/images/posts"   # how markdown references images
 
 def api(ep, payload):
@@ -276,23 +277,70 @@ SLUG_OVERRIDE = {
     "Category Theory: What Is A Category?": "category-theory",
 }
 
-if __name__ == "__main__":
-    ids = json.load(open("postids.json"))
-    only = sys.argv[1] if len(sys.argv) > 1 else None
-    # Blog posts from the database
-    for pid in ids:
-        title, body, root = export_page(pid)
-        slug = SLUG_OVERRIDE.get(title, slugify(title))
-        if only and only not in slug: continue
+def bval(rec):
+    v = rec.get("value", {})
+    return v.get("value", v)
+
+def fetch_title(pid):
+    """Cheap title lookup (one chunk) so we can decide to skip before doing the
+    full render, which would otherwise re-download the page's images."""
+    d = api("loadPageChunk", {"pageId": uuid(pid), "limit": 1,
+            "cursor": {"stack": []}, "chunkNumber": 0, "verticalColumns": False})
+    root = d["recordMap"]["block"].get(uuid(pid))
+    return title_of(bval(root)) if root else ""
+
+def discover_post_ids():
+    """Query the posts database under the root page for its current page IDs,
+    so newly-created Notion pages are picked up automatically."""
+    d = api("loadPageChunk", {"pageId": uuid(ROOT), "limit": 50,
+            "cursor": {"stack": []}, "chunkNumber": 0, "verticalColumns": False})
+    blocks = d["recordMap"]["block"]
+    cvid = next(b for b, r in blocks.items() if bval(r).get("type") == "collection_view")
+    cv = bval(blocks[cvid])
+    colid, viewid = cv["collection_id"], cv["view_ids"][0]
+    res = api("queryCollection", {"collection": {"id": colid},
+        "collectionView": {"id": viewid},
+        "loader": {"type": "reducer", "reducers": {"c": {"type": "results", "limit": 100}},
+                   "searchQuery": "", "userTimeZone": "UTC"}})
+    return [b for b, r in res["recordMap"]["block"].items() if bval(r).get("type") == "page"]
+
+def main():
+    # Flags: --force re-exports pages whose .md already exists; a bare word
+    # filters to slugs containing it. By default only missing pages are written,
+    # so re-running after adding one Notion page touches just that page.
+    args = sys.argv[1:]
+    force = "--force" in args
+    only = next((a for a in args if not a.startswith("-")), None)
+
+    for pid in discover_post_ids():
+        title = fetch_title(pid)
         if slugify(title) in DEMO:
-            print(f"skip demo: {title}", file=sys.stderr); continue
+            continue
+        slug = SLUG_OVERRIDE.get(title, slugify(title))
+        if only and only not in slug:
+            continue
+        path = os.path.join(OUT_MD, slug + ".md")
+        if os.path.exists(path) and not force:
+            print(f"exists, skipping {slug}.md (use --force to overwrite)", file=sys.stderr)
+            continue
+        # Full render (downloads images) only for pages we will actually write.
+        _, body, root = export_page(pid)
         write_post(slug, title, body, root, OUT_MD)
+
     # Standalone pages (About, Colophon) — child pages of the root, not in the DB
     for pid, slug, page_title in [("148786cf-a010-81c2-b3a0-fc4b046a0351", "about", "About"),
                                   ("148786cf-a010-8033-9b06-ee70f38ecb9d", "colophon", "Colophon")]:
-        if only and only not in slug: continue
+        if only and only not in slug:
+            continue
+        path = os.path.join(OUT_PAGES, slug + ".md")
+        if os.path.exists(path) and not force:
+            print(f"exists, skipping {slug}.md", file=sys.stderr)
+            continue
         try:
             title, body, root = export_page(pid)
-            write_post(slug, page_title, body, root, os.environ.get("OUT_PAGES", "out/pages"))
+            write_post(slug, page_title, body, root, OUT_PAGES)
         except Exception as e:
             print(f"!! page {slug} failed: {e}", file=sys.stderr)
+
+if __name__ == "__main__":
+    main()

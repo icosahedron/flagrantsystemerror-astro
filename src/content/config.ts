@@ -10,6 +10,9 @@ const blog = defineCollection({
 		heroImage: z.string().optional(),
 		heroImagePosition: z.number().optional(),
 		icon: z.string().optional(),
+		// Hidden from the production build (no page, not in archive/RSS) but
+		// still viewable via `npm run dev`.
+		draft: z.boolean().default(false),
 	}),
 });
 

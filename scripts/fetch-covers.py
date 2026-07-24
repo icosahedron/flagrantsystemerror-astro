@@ -90,8 +90,27 @@ def process(pid, path):
     set_frontmatter(path, hero, pos, icon)
     print(f"  {os.path.basename(path):40} icon={icon!s:4} pos={pos!s:6} cover={'yes' if hero else 'no'}")
 
+ROOT = "148786cf-a010-80f9-824f-f694cae70443"
+
+def bval(rec):
+    v = rec.get("value", {})
+    return v.get("value", v)
+
+def discover_post_ids():
+    d = api("loadPageChunk", {"pageId": uuid(ROOT), "limit": 50,
+            "cursor": {"stack": []}, "chunkNumber": 0, "verticalColumns": False})
+    blocks = d["recordMap"]["block"]
+    cvid = next(b for b, r in blocks.items() if bval(r).get("type") == "collection_view")
+    cv = bval(blocks[cvid])
+    colid, viewid = cv["collection_id"], cv["view_ids"][0]
+    res = api("queryCollection", {"collection": {"id": colid},
+        "collectionView": {"id": viewid},
+        "loader": {"type": "reducer", "reducers": {"c": {"type": "results", "limit": 100}},
+                   "searchQuery": "", "userTimeZone": "UTC"}})
+    return [b for b, r in res["recordMap"]["block"].items() if bval(r).get("type") == "page"]
+
 def main():
-    ids = json.load(open(os.path.join(os.path.dirname(__file__), "postids.json")))
+    ids = discover_post_ids()
     # Blog posts (keyed by title -> slug).
     for pid in ids:
         d = api("loadPageChunk", {"pageId": uuid(pid), "limit": 1,

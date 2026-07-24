@@ -23,9 +23,14 @@ next build it automatically:
 - gets its own page at `/<filename>/` — the filename is the URL slug,
 - is added to the RSS feed (`/rss.xml`) and `sitemap.xml`.
 
-Nothing else to wire up. There is no draft flag: every file in `src/content/blog/`
-is published on the next build. To stage a post, keep it outside that folder until
-it's ready.
+Nothing else to wire up.
+
+### Drafts
+
+Set `draft: true` in a post's frontmatter to keep it out of the production build —
+it gets no page, and is excluded from the archive, RSS, and sitemap. Drafts are
+still viewable in `npm run dev`, so you can preview one before publishing. Remove
+the flag (or set it to `false`) to publish.
 
 ### Frontmatter
 
@@ -38,6 +43,7 @@ updatedDate: 2026-07-25       # optional
 heroImage: "/images/covers/my-cover.jpg"   # optional cover banner
 heroImagePosition: 0.5        # optional, 0=top .. 1=bottom focal point
 icon: "📘"                    # optional emoji, shown on the cover and in the archive
+draft: true                   # optional, hides from the production build
 ---
 
 Body starts here.
@@ -80,19 +86,39 @@ Before the first real deploy, set `site` in `astro.config.mjs` to the final URL 
 it's what makes `sitemap.xml` and the RSS feed use absolute links. If you serve
 from a sub-path (e.g. a GitHub Pages project site), also set `base`.
 
-## Re-importing from Notion
+## Authoring in Notion
 
-The original content came from Notion; two scripts can regenerate it (public
-Notion API, no auth needed):
+You can still write in Notion and import. Two scripts talk to the public Notion API
+(no auth needed) and discover pages live from the posts database under the root
+page, so a page you just created is picked up automatically. Run both from the repo
+root:
 
-- `scripts/notion-export.py` — exports the Notion pages to Markdown and downloads
-  their inline images.
-- `scripts/fetch-covers.py` — downloads each page's cover into
+```bash
+python3 scripts/notion-export.py     # writes new posts to src/content/blog/ + images
+python3 scripts/fetch-covers.py      # adds each post's cover + icon to its frontmatter
+npm run build                        # the new post now appears everywhere
+```
+
+- **`scripts/notion-export.py`** converts each Notion page to Markdown and downloads
+  its inline images. By default it **only writes posts that don't already exist**, so
+  re-running after adding one Notion page touches just that page and leaves your
+  edited files alone. Pass `--force` to re-export everything, or a slug fragment
+  (e.g. `python3 scripts/notion-export.py kubernetes`) to target specific posts.
+- **`scripts/fetch-covers.py`** downloads each page's cover into
   `public/images/covers/` and writes `heroImage`, `heroImagePosition`, and `icon`
-  into the post frontmatter.
+  into the frontmatter. Re-running refreshes those fields for every post.
 
 Slugs of already-published posts are pinned in each script's `SLUG_OVERRIDE` map so
-existing URLs keep working. Day-to-day you don't need these — just edit Markdown.
+existing URLs keep working; new pages get a slug from their title. Day-to-day you
+don't need these — a plain Markdown file works just as well.
+
+### Adding a page you created in Notion
+
+1. Create and fill in the page in your Notion posts database.
+2. `python3 scripts/notion-export.py` — the new page is discovered and written to
+   `src/content/blog/<slug>.md`; existing posts are skipped.
+3. `python3 scripts/fetch-covers.py` — pulls its cover and icon into the frontmatter.
+4. `npm run dev` to preview, then `npm run build` to publish.
 
 ## How the Notion look works
 

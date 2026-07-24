@@ -5,9 +5,9 @@ import FormattedDate from '../components/FormattedDate.astro';
 
 const coverImage = '/flagrant-banner.png';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+// Drafts show in `npm run dev` but are excluded from the production build.
+const posts = (await getCollection('blog', ({ data }) => import.meta.env.DEV || !data.draft))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 <Layout coverImage={coverImage}>
   <ul class="post-list">
