@@ -17,6 +17,6 @@ export default defineConfig({
 	markdown: {
 		remarkPlugins: [remarkDirective, remarkNotionDirectives, remarkMath],
 		rehypePlugins: [rehypeKatex, rehypeNotionClasses],
-		shikiConfig: { theme: 'github-light' },
+		shikiConfig: { themes: { light: 'github-light', dark: 'github-dark' } },
 	},
 });

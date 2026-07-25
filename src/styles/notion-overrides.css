@@ -37,6 +37,27 @@
   background: var(--bg-color-1) !important;
 }
 
+/* Shiki dual themes emit github-light colors inline plus a --shiki-dark custom
+   property per token. In dark mode, switch the token colors to the dark theme.
+   The block background stays the Notion panel (handled above), so only the text
+   colors need to flip. */
+@media (prefers-color-scheme: dark) {
+  .notion-code,
+  .notion-code span {
+    color: var(--shiki-dark) !important;
+  }
+}
+
+/* Callouts: no border, soft off-white fill. --bg-color-1 is off-white in light
+   mode and a dark panel in dark mode, so this reads correctly in both. The
+   vendored .notion-gray_co only greys the text, which is low-contrast on the
+   fill, so restore the normal foreground colour. */
+.notion-callout {
+  border: none;
+  background: var(--bg-color-1);
+  color: var(--fg-color);
+}
+
 /* Blockquotes hit the same two issues as lists. The vendored .notion-quote uses
    `white-space: pre-wrap`, so the newlines Markdown puts around the inner
    <p class="notion-text"> render as blank lines above and below the text. And

@@ -38,7 +38,9 @@ def slugify(s):
 def cover_src(raw, pid):
     if raw.startswith("/images/"):
         return "https://www.notion.so" + raw
-    if "amazonaws.com" in raw or "notion-static" in raw:
+    # Expired S3 URLs and newer `attachment:<id>:<name>` refs both resolve
+    # through Notion's image proxy, keyed to the owning block id.
+    if "amazonaws.com" in raw or "notion-static" in raw or raw.startswith("attachment:"):
         return f"https://www.notion.so/image/{urllib.parse.quote(raw, safe='')}?table=block&id={pid}&cache=v2"
     if "images.unsplash.com" in raw and "w=" not in raw:
         return raw + "&w=1600"
@@ -61,13 +63,16 @@ def set_frontmatter(path, hero, pos, icon):
     if not m:
         print("  !! no frontmatter in", path); return
     fm = m.group(1)
-    for key in ("heroImage", "heroImagePosition", "icon"):
-        fm = re.sub(rf"\n?{key}:.*", "", fm)
+    # Only rewrite the fields we actually resolved. A transient empty response
+    # from Notion must never strip a cover/icon that's already in the file.
     if hero:
+        for key in ("heroImage", "heroImagePosition"):
+            fm = re.sub(rf"\n?{key}:.*", "", fm)
         fm += f'\nheroImage: "{hero}"'
         if pos is not None:
             fm += f"\nheroImagePosition: {pos}"
     if icon:
+        fm = re.sub(r"\n?icon:.*", "", fm)
         fm += f'\nicon: "{icon}"'
     open(path, "w", encoding="utf-8").write(f"---\n{fm}\n---\n" + s[m.end():])
 

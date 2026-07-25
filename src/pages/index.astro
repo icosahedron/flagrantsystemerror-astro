@@ -1,15 +1,27 @@
 ---
-import { getCollection } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import FormattedDate from '../components/FormattedDate.astro';
+import { SITE_TITLE } from '../consts';
 
 const coverImage = '/flagrant-banner.png';
+
+// The home page mirrors the Notion root page: icon + title + intro, then the
+// collection of posts. The intro lives in src/content/pages/home.md so it's
+// editable like any other content.
+const home = await getEntry('pages', 'home');
+const { Content } = await home.render();
 
 // Drafts show in `npm run dev` but are excluded from the production build.
 const posts = (await getCollection('blog', ({ data }) => import.meta.env.DEV || !data.draft))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 <Layout coverImage={coverImage}>
+  <div class="home-header">
+    <img class="site-icon" src="/images/site-icon.svg" alt="" />
+    <h1 class="notion-title">{SITE_TITLE}</h1>
+  </div>
+  <Content />
   <ul class="post-list">
     {posts.map((post) => (
       <li class="post-item">
@@ -40,10 +52,29 @@ const posts = (await getCollection('blog', ({ data }) => import.meta.env.DEV || 
 </Layout>
 
 <style>
+  /* Home header: icon overlapping the cover, then the site title — like the
+     Notion root page. */
+  .home-header {
+    display: flex;
+    flex-direction: column;
+  }
+  .site-icon {
+    width: 60px;
+    height: 60px;
+    margin-top: -3rem;
+    margin-bottom: 0.25rem;
+  }
+  .notion-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0.5rem 0 0.5rem;
+    color: var(--fg-color, rgb(55, 53, 47));
+  }
   .post-list {
     list-style: none;
     padding: 0;
-    margin: 0;
+    margin: 1.5rem 0 0;
   }
   .post-item {
     padding: 0.9rem 0;

@@ -82,9 +82,10 @@ def title_of(v):
 downloaded = {}
 def local_image(src, block_id):
     if not src: return None
-    # Raw S3 URLs are expired; fetch through Notion's signing proxy, which
-    # validates against the owning block id. This is what react-notion-x does.
-    if src.startswith("http") and "amazonaws.com" in src:
+    # Raw S3 URLs are expired, and newer `attachment:<id>:<name>` refs aren't
+    # URLs at all; both resolve through Notion's signing proxy, keyed to the
+    # owning block id. This is what react-notion-x does.
+    if ("amazonaws.com" in src) or src.startswith("attachment:"):
         enc = urllib.parse.quote(src, safe="")
         src = f"https://www.notion.so/image/{enc}?table=block&id={block_id}&cache=v2"
     elif src.startswith("/image"):
