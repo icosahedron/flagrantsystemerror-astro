@@ -10,13 +10,19 @@ import rehypeKatex from 'rehype-katex';
 import remarkNotionDirectives from './src/plugins/remark-notion-directives.mjs';
 import rehypeNotionClasses from './src/plugins/rehype-notion-classes.mjs';
 
+import cloudflare from "@astrojs/cloudflare";
+
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://flagrantsystemerror.com',
-	integrations: [mdx(), sitemap()],
-	markdown: {
+    site: 'https://flagrantsystemerror.com',
+    integrations: [mdx(), sitemap()],
+
+    markdown: {
 		remarkPlugins: [remarkDirective, remarkNotionDirectives, remarkMath],
 		rehypePlugins: [rehypeKatex, rehypeNotionClasses],
 		shikiConfig: { themes: { light: 'github-light', dark: 'github-dark' } },
 	},
+
+    output: "hybrid",
+    adapter: cloudflare()
 });
