@@ -1,7 +1,10 @@
 ---
 title: "The Pyramid Principle for Writing"
 pubDate: 2024-11-29
+updatedDate: 2026-07-24
 description: "The Pyramid Principlehttps://www.amazon.com/Pyramid-Principle-Logic-Writing-Thinking/dp/1292372265/ by Barbara Minto is a very short book on writing and thin…"
+public: true
+notionLastEdited: "2026-07-24T05:37:24.292000+00:00"
 heroImage: "/images/covers/ebb175b7d8ad.jpg"
 heroImagePosition: 0.6621
 ---
@@ -12,8 +15,6 @@ The book's advice is meant for business documents. It is not general-purpose wri
 :::callout{icon="⚠️"}
 This is a summary of the advice in the book *The Pyramid Principle* by Barbara Minto. While I attempt to apply the principles here, I am still learning, so this document may not properly reflect the material in that book.
 :::
-
-
 
 ## Document Structure (Chapter 1)
 
@@ -50,6 +51,7 @@ Here is an example explaining why humans should explore space.
 
 :::figure{src="/images/posts/eb3524a60576.png"}
 :::
+
 :::callout{icon="ℹ️"}
 This diagram was taken from [https://www.consultingmethodology.com/wp-content/uploads/Pyramid-principle_v2.1.pdf](https://www.consultingmethodology.com/wp-content/uploads/Pyramid-principle_v2.1.pdf), which is a summary of the book reviewed here.
 :::
@@ -130,6 +132,7 @@ Eventually, you might end up with a diagram for functional programming that look
 
 :::figure{src="/images/posts/98bf6457961a.svg"}
 :::
+
 Each layer is a more specific reason for using functional programming.
 
 ## Introductions (Chapter 4)
@@ -318,8 +321,8 @@ The key points for including headings are the following:
 
 - Don't regard the heading as part of the text, as the example below shows.
 
-> **Functional Programming
-> **This paradigm will help….
+> **Functional Programming**
+> This paradigm will help….
 
 - Don't reference the headings as part of the text as done above. Restating the heading is acceptable. People don't read the heading as part of the text.
 

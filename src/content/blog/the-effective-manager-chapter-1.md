@@ -2,7 +2,8 @@
 title: "The Effective Manager, Chapter 1"
 pubDate: 2026-07-25
 description: "Becoming a manager again made me want to revisit the latest literature."
-draft: true
+public: false
+notionLastEdited: "2026-07-25T08:26:00.143000+00:00"
 ---
 > People leave managers, not companies.
 > — Marcus Buckingham, “First, Break All the Rules”

@@ -10,9 +10,10 @@ const blog = defineCollection({
 		heroImage: z.string().optional(),
 		heroImagePosition: z.number().optional(),
 		icon: z.string().optional(),
-		// Hidden from the production build (no page, not in archive/RSS) but
-		// still viewable via `npm run dev`.
-		draft: z.boolean().default(false),
+		// Mirrors Notion's "Public" checkbox. When false the post is hidden from
+		// the production build (no page, not in archive/RSS) but still viewable
+		// via `npm run dev`. Defaults true so a missing field publishes.
+		public: z.boolean().default(true),
 	}),
 });
 

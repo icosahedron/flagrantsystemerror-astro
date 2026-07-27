@@ -2,6 +2,8 @@
 title: "Category Theory: Programming Language Semantics"
 pubDate: 2024-11-29
 description: "While watching video 2.1 of the Category Theory series, Bartosz briefly mentions semantics of programming languages. But what are these semantics?"
+public: true
+notionLastEdited: "2024-11-29T19:49:24.933000+00:00"
 heroImage: "/images/covers/c1c7f0e68786.jpg"
 heroImagePosition: 0
 icon: "🎴"
@@ -44,17 +46,17 @@ This is not so different from feature specifications that you may have written.
 
 A good example is the Java Language Specification of iteration in a [for loop](https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.14):
 
-> **14.14.1.2. Iteration of **`for`** Statement**
+> **14.14.1.2. Iteration of** `for` **Statement**
 
-> Next, a `for` iteration step is performed, as follows:
+> Next, a `for` iteration step is performed, as follows:
 
-> If the *Expression* is present, it is evaluated. If the result is of type `Boolean`, it is subject to unboxing conversion ([§5.1.8](https://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html#jls-5.1.8)).
+> If the *Expression* is present, it is evaluated. If the result is of type `Boolean`, it is subject to unboxing conversion ([§5.1.8](https://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html#jls-5.1.8)).
 
-> If the *Expression* is not present, or it is present and the value resulting from its evaluation (including any possible unboxing) is `true`, then the contained *Statement* is executed. Then there is a choice:
+> If the *Expression* is not present, or it is present and the value resulting from its evaluation (including any possible unboxing) is `true`, then the contained *Statement* is executed. Then there is a choice:
 
-> If the *Expression* is present and the value resulting from its evaluation (including any possible unboxing) is `false`, no further action is taken and the `for` statement completes normally.
+> If the *Expression* is present and the value resulting from its evaluation (including any possible unboxing) is `false`, no further action is taken and the `for` statement completes normally.
 
-> If the *Expression* is not present, then the only way a `for` statement can complete normally is by use of a `break` statement.
+> If the *Expression* is not present, then the only way a `for` statement can complete normally is by use of a `break` statement.
 
 ### Problems with Natural Language Operational Semantics
 
@@ -120,8 +122,8 @@ This example was adapted from Chapter 9 of the book [Formal Syntax and Semantics
 As another example, the document for Standard ML describes the notation:
 
 > Each rule of the semantics allows inferences among sentences of the form
-> $A ⊢ phrase ⇒ A^{\prime}$
-> where A is usually an environment or a context, phrase is a phrase of the Core, and A' is a semantic object – usually a type or an environment. It may be pronounced “phrase elaborates to A' in (context or environment) A”.
+> $A ⊢ phrase ⇒ A^′$
+> where A is usually an environment or a context, phrase is a phrase of the Core, and A′ is a semantic object – usually a type or an environment. It may be pronounced “phrase elaborates to A′ in (context or environment) A”.
 
 Here is a sample language construct in the premise/conclusion format for Standard ML.
 

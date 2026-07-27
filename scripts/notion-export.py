@@ -236,6 +236,44 @@ def export_page(pid, slug_hint=None):
 def ymd(ms):
     return datetime.datetime.fromtimestamp(ms / 1000, datetime.timezone.utc).strftime("%Y-%m-%d")
 
+def iso(ms):
+    return datetime.datetime.fromtimestamp(ms / 1000, datetime.timezone.utc).isoformat()
+
+def stored_last_edited_ms(path):
+    """Read notionLastEdited out of an existing .md's front matter, as epoch ms.
+    Returns None if the file has no such field (e.g. exported before this field
+    existed) so callers can fall back to leaving it untouched."""
+    try:
+        with open(path) as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return None
+    if not lines or lines[0].strip() != "---":
+        return None
+    for ln in lines[1:]:
+        if ln.strip() == "---":
+            break
+        m = re.match(r'\s*notionLastEdited:\s*"?([^"]+)"?\s*$', ln)
+        if m:
+            try:
+                dt = datetime.datetime.fromisoformat(m.group(1))
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=datetime.timezone.utc)
+                return int(dt.timestamp() * 1000)
+            except ValueError:
+                return None
+    return None
+
+def public_of(root, pubid):
+    """Read the Notion 'Public' checkbox (schema property id `pubid`) off a page
+    block. Notion is the source of truth for whether a post is published."""
+    if not pubid:
+        return None
+    val = root.get("properties", {}).get(pubid)
+    if not val:
+        return False  # unchecked boxes are simply absent from properties
+    return val[0][0] == "Yes"
+
 def first_sentence(body):
     for ln in body.splitlines():
         ln = ln.strip()
@@ -250,18 +288,27 @@ def first_sentence(body):
 def yaml_escape(s):
     return s.replace('\\', '\\\\').replace('"', '\\"')
 
-def write_post(slug, title, body, root, out_dir):
+def write_post(slug, title, body, root, out_dir, is_public=None):
     pub = ymd(root["created_time"])
     upd = ymd(root["last_edited_time"])
     desc = first_sentence(body)
+    path = os.path.join(out_dir, slug + ".md")
     fm = ["---", f'title: "{yaml_escape(title)}"', f'pubDate: {pub}']
     if upd != pub:
         fm.append(f'updatedDate: {upd}')
     if desc:
         fm.append(f'description: "{yaml_escape(desc)}"')
+    # Notion's 'Public' checkbox drives publication; re-export always reflects
+    # it, overwriting any local edit. Omitted for pages outside the DB.
+    if is_public is not None:
+        fm.append(f'public: {"true" if is_public else "false"}')
+    # Full-precision revision stamp used to detect Notion edits on re-run.
+    # (updatedDate above is day-resolution and omitted when it equals pubDate,
+    # so it can't serve as a reliable comparison key.)
+    fm.append(f'notionLastEdited: "{iso(root["last_edited_time"])}"')
     fm += ["---", ""]
     os.makedirs(out_dir, exist_ok=True)
-    open(os.path.join(out_dir, slug + ".md"), "w").write("\n".join(fm) + body)
+    open(path, "w").write("\n".join(fm) + body)
     print(f"WROTE {out_dir}/{slug}.md  pub={pub}", file=sys.stderr)
 
 DEMO = ("nextjs-notion-starter-kit", "example-article",
@@ -282,17 +329,23 @@ def bval(rec):
     v = rec.get("value", {})
     return v.get("value", v)
 
-def fetch_title(pid):
-    """Cheap title lookup (one chunk) so we can decide to skip before doing the
-    full render, which would otherwise re-download the page's images."""
+def fetch_meta(pid):
+    """Cheap title + revision-time lookup (one chunk) so we can decide to skip
+    before doing the full render, which would otherwise re-download the page's
+    images. Returns (title, last_edited_ms)."""
     d = api("loadPageChunk", {"pageId": uuid(pid), "limit": 1,
             "cursor": {"stack": []}, "chunkNumber": 0, "verticalColumns": False})
     root = d["recordMap"]["block"].get(uuid(pid))
-    return title_of(bval(root)) if root else ""
+    if not root:
+        return "", None
+    v = bval(root)
+    return title_of(v), v.get("last_edited_time")
 
 def discover_post_ids():
     """Query the posts database under the root page for its current page IDs,
-    so newly-created Notion pages are picked up automatically."""
+    so newly-created Notion pages are picked up automatically. Also resolves the
+    'Public' checkbox's schema property id (opaque and collection-specific), so
+    callers can read it off each page's root block."""
     d = api("loadPageChunk", {"pageId": uuid(ROOT), "limit": 50,
             "cursor": {"stack": []}, "chunkNumber": 0, "verticalColumns": False})
     blocks = d["recordMap"]["block"]
@@ -303,7 +356,10 @@ def discover_post_ids():
         "collectionView": {"id": viewid},
         "loader": {"type": "reducer", "reducers": {"c": {"type": "results", "limit": 100}},
                    "searchQuery": "", "userTimeZone": "UTC"}})
-    return [b for b, r in res["recordMap"]["block"].items() if bval(r).get("type") == "page"]
+    schema = bval(next(iter(res["recordMap"]["collection"].values()))).get("schema", {})
+    pubid = next((pid for pid, s in schema.items() if s.get("name") == "Public"), None)
+    ids = [b for b, r in res["recordMap"]["block"].items() if bval(r).get("type") == "page"]
+    return ids, pubid
 
 def main():
     # Flags: --force re-exports pages whose .md already exists; a bare word
@@ -313,8 +369,9 @@ def main():
     force = "--force" in args
     only = next((a for a in args if not a.startswith("-")), None)
 
-    for pid in discover_post_ids():
-        title = fetch_title(pid)
+    post_ids, pubid = discover_post_ids()
+    for pid in post_ids:
+        title, edited_ms = fetch_meta(pid)
         if slugify(title) in DEMO:
             continue
         slug = SLUG_OVERRIDE.get(title, slugify(title))
@@ -322,11 +379,19 @@ def main():
             continue
         path = os.path.join(OUT_MD, slug + ".md")
         if os.path.exists(path) and not force:
-            print(f"exists, skipping {slug}.md (use --force to overwrite)", file=sys.stderr)
-            continue
+            stored = stored_last_edited_ms(path)
+            if stored is None:
+                print(f"exists (no revision stamp), skipping {slug}.md "
+                      f"(re-run with --force to add one)", file=sys.stderr)
+                continue
+            if edited_ms is None or edited_ms <= stored:
+                print(f"up to date, skipping {slug}.md", file=sys.stderr)
+                continue
+            print(f"NOTION NEWER, re-exporting {slug}.md "
+                  f"({iso(stored)} -> {iso(edited_ms)})", file=sys.stderr)
         # Full render (downloads images) only for pages we will actually write.
         _, body, root = export_page(pid)
-        write_post(slug, title, body, root, OUT_MD)
+        write_post(slug, title, body, root, OUT_MD, is_public=public_of(root, pubid))
 
     # Standalone pages (About, Colophon) — child pages of the root, not in the DB
     for pid, slug, page_title in [("148786cf-a010-81c2-b3a0-fc4b046a0351", "about", "About"),
@@ -335,8 +400,17 @@ def main():
             continue
         path = os.path.join(OUT_PAGES, slug + ".md")
         if os.path.exists(path) and not force:
-            print(f"exists, skipping {slug}.md", file=sys.stderr)
-            continue
+            stored = stored_last_edited_ms(path)
+            _, edited_ms = fetch_meta(pid)
+            if stored is None:
+                print(f"exists (no revision stamp), skipping {slug}.md "
+                      f"(re-run with --force to add one)", file=sys.stderr)
+                continue
+            if edited_ms is None or edited_ms <= stored:
+                print(f"up to date, skipping {slug}.md", file=sys.stderr)
+                continue
+            print(f"NOTION NEWER, re-exporting {slug}.md "
+                  f"({iso(stored)} -> {iso(edited_ms)})", file=sys.stderr)
         try:
             title, body, root = export_page(pid)
             write_post(slug, page_title, body, root, OUT_PAGES)

@@ -3,6 +3,8 @@ title: "Probability: Fundamentals"
 pubDate: 2025-12-10
 updatedDate: 2026-07-23
 description: "Probability deals with likelihoods of events occurring or a member of a population matching some criteria. For example, given a fair coin, 50% of the time it…"
+public: false
+notionLastEdited: "2026-07-23T16:28:52.028000+00:00"
 heroImage: "/images/covers/cf33f8697d93.jpg"
 heroImagePosition: 0.3394
 ---
@@ -18,7 +20,7 @@ The groups of people that we measure above are mathematical objects called *sets
 
 ### Notation
 
-The notation for sets is pretty arbitrary. Each set is typically represented by a capital letter, or perhaps two letters. For our coin toss, heads would be *H* and tails *T*. But these are arbitrary. They could easily be *A* or *B, *though frequently the letters better represent the names of the sets.
+The notation for sets is pretty arbitrary. Each set is typically represented by a capital letter, or perhaps two letters. For our coin toss, heads would be *H* and tails *T*. But these are arbitrary. They could easily be *A* or *B,* though frequently the letters better represent the names of the sets.
 
 If we want to say that a particular element is a member of a set, we use the symbol $\in$, like $x$ being in set $T$ as
 
@@ -32,7 +34,7 @@ $$
 John \in P
 $$
 
-To represent the probability of an event or membership in a set, we simply wrap the name of the set as P(name of set). So our sandwich set probabilities would be *P(P)* and *P(T), *for Peanut butter and Tuna respectively. Again, these letters are arbitrary, but the function P is standard way to express the probability.
+To represent the probability of an event or membership in a set, we simply wrap the name of the set as P(name of set). So our sandwich set probabilities would be *P(P)* and *P(T),* for Peanut butter and Tuna respectively. Again, these letters are arbitrary, but the function P is standard way to express the probability.
 
 ### Empty Set
 

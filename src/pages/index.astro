@@ -12,8 +12,8 @@ const coverImage = '/flagrant-banner.png';
 const home = await getEntry('pages', 'home');
 const { Content } = await home.render();
 
-// Drafts show in `npm run dev` but are excluded from the production build.
-const posts = (await getCollection('blog', ({ data }) => import.meta.env.DEV || !data.draft))
+// Non-public posts show in `npm run dev` but are excluded from the production build.
+const posts = (await getCollection('blog', ({ data }) => import.meta.env.DEV || data.public))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 <Layout coverImage={coverImage}>

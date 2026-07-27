@@ -3,9 +3,7 @@ title: "About"
 pubDate: 2024-11-24
 updatedDate: 2025-12-03
 description: "My name is Jay Kint."
-heroImage: "/images/covers/582b8bf9d8bd.jpg"
-heroImagePosition: 0.3667
-icon: "👋"
+notionLastEdited: "2025-12-03T16:51:00.056000+00:00"
 ---
 My name is Jay Kint.
 

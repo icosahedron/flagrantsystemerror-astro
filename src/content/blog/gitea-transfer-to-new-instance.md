@@ -1,7 +1,10 @@
 ---
 title: "Gitea Transfer to New Instance"
 pubDate: 2024-12-21
+updatedDate: 2026-07-25
 description: "This article describes how to move a Giteahttps://about.gitea.com instance from one docker container to another. I thought that simply copying the mounted vo…"
+public: true
+notionLastEdited: "2026-07-25T05:35:39.448000+00:00"
 heroImage: "/images/covers/e9dca569a152.jpg"
 heroImagePosition: 0.3068
 ---
@@ -39,7 +42,9 @@ This should create a directory called `data` under the `/data/git` directory, wh
 
 In the docker container of the new instance of Gitea, follow the above steps, except use the following command line to import the items.
 
-`gitea restore-repo --repo_name <repo name> --repo_dir pwd/data --owner_name <gitea account name>`
+```bash
+gitea restore-repo --repo_name <repo name> --repo_dir pwd/data --owner_name <gitea account name>
+```
 
 The owner must already be defined in Gitea, but the repo will be created by `restore-repo`.
 

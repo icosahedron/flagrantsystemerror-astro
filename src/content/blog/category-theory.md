@@ -2,6 +2,8 @@
 title: "Category Theory: What Is A Category?"
 pubDate: 2024-11-29
 description: "From a functional programming perspective, category theory is a branch of mathematics that serves a purpose similar to what patterns do in object-oriented pr…"
+public: true
+notionLastEdited: "2024-11-29T08:46:14.410000+00:00"
 heroImage: "/images/covers/429c4679f093.jpg"
 heroImagePosition: 0.4263
 icon: "🥧"
@@ -66,7 +68,7 @@ But composition of what? And identity of what?
 
 ### Objects in a Category
 
-A category is a group of *objects* or *things, *or as described in the videos, a *bunch*.  A category is not a group in the mathematical sense. 
+A category is a group of *objects* or *things,* or as described in the videos, a *bunch*.  A category is not a group in the mathematical sense. 
 
 What is an *object*? It’s not really defined.  We know it’s there, but category theory does not attempt to define it beyond “it’s what is in the category”.  
 
@@ -81,6 +83,7 @@ In category theory, a function (also known as a morphism) is a transformation be
 :::figure{src="/images/posts/ff04536ecd3b.png" alt="Figure 1, functions f and g map objects between categories A and B."}
 **Figure 1,** functions f and g map objects between categories A and B.
 :::
+
 When diagramming, functions are represented as directed arrows, as in Figure 1.  It is important that they show as directed.  Functions are one way.  You give it an argument, it returns a result.  If you give the result back to the function, you don’t get the original argument, you get another result.
 
 In the diagram above, we see that $f(x)$ and $g(x)$ must be different functions because for the same object in A, they return different objects in B.
@@ -91,7 +94,7 @@ Functions have a domain, a codomain, and an image. In the parlance of sets, the 
 
 Wikipedia’s example of a domain, codomain, and image using sets:
 
-> For a function $f: ℝ \to ℝ$, defined by $f : x ↦ x^2$, or equivalently $f(x) = x^2$, 
+> For a function $f: ℝ \to ℝ$, defined by $f : x ↦ x^2$, or equivalently $f(x) = x^2$, 
 > the codomain of $f$ is ℝ, but $f$ does not map to any negative number. Thus the image of $f$ is the set $R_0^{+}$, i.e., the interval $[0,\infin)$.
 
 :::callout{icon="📡"}
@@ -113,6 +116,7 @@ Each object in a category has an identity function. This function simply maps an
 :::figure{src="/images/posts/360d805f2600.png" alt="Figure 2 Identity functions for objects in the category represented as arrows that map back to the original object."}
 **Figure 2** Identity functions for objects in the category represented as arrows that map back to the original object.
 :::
+
 In the category above, each object has an $id$ function, which returns the object itself, essentially $id(x) = x$.  In code the equivalent is 
 
 ```python
@@ -145,6 +149,7 @@ Where there is any function between two objects in category A and category B, an
 :::figure{src="/images/posts/703c013b8571.png" alt="Figure 3 If a function exists from an object in A to an object in B and one from that object in B to an object in C, then a function must exist from the object in A to the object in C."}
 **Figure 3** If a function exists from an object in A to an object in B and one from that object in B to an object in C, then a function must exist from the object in A to the object in C.
 :::
+
 ### Composition and Associativity
 
 What about composing more than 2 functions?  What about a category D with a function $h$ from the object in C?  That would look like $h \circ g \circ f$, as you would expect.

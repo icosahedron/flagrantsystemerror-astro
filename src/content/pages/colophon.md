@@ -3,9 +3,7 @@ title: "Colophon"
 pubDate: 2024-11-24
 updatedDate: 2026-07-25
 description: "Flagrant System Error is curated from the following tools:"
-heroImage: "/images/covers/2ae1078c0a91.png"
-heroImagePosition: 0.5
-icon: "📕"
+notionLastEdited: "2026-07-25T07:36:57.926000+00:00"
 ---
 Flagrant System Error is curated from the following tools:
 

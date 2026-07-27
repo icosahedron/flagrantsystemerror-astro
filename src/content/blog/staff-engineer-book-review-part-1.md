@@ -3,6 +3,8 @@ title: "Staff Engineer Book Review, Part 1"
 pubDate: 2024-11-29
 updatedDate: 2024-12-11
 description: "The last couple of years have seen more attention paid to the Staff+ tier of technical positions. A couple of books in particular, Staff Engineer by Will Lar…"
+public: true
+notionLastEdited: "2024-12-11T02:04:49.300000+00:00"
 heroImage: "/images/covers/db9b116d4db0.jpg"
 heroImagePosition: 0.7628
 ---
