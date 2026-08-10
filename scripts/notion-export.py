@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Export Flagrant System Error Notion posts -> Markdown + local images."""
-import json, os, re, sys, urllib.request, urllib.parse, hashlib, collections, datetime
+import json, os, re, sys, time, urllib.error, urllib.request, urllib.parse, hashlib, collections, datetime
 
 ROOT = "148786cf-a010-80f9-824f-f694cae70443"
 OUT_MD  = os.environ.get("OUT_MD",  "src/content/blog")
@@ -8,11 +8,27 @@ OUT_IMG = os.environ.get("OUT_IMG", "public/images/posts")
 OUT_PAGES = os.environ.get("OUT_PAGES", "src/content/pages")
 IMG_PUBLIC_PREFIX = "/images/posts"   # how markdown references images
 
+def open_with_rate_limit_retry(request):
+    for attempt in range(6):
+        try:
+            return urllib.request.urlopen(request)
+        except urllib.error.HTTPError as error:
+            if error.code != 429 or attempt == 5:
+                raise
+            retry_after = error.headers.get("Retry-After") if error.headers else None
+            try:
+                delay = max(0.0, float(retry_after))
+            except (TypeError, ValueError):
+                delay = 60.0
+            error.close()
+            print(f"Notion rate-limited; retrying in {delay:g}s", file=sys.stderr)
+            time.sleep(delay)
+
 def api(ep, payload):
     r = urllib.request.Request("https://www.notion.so/api/v3/" + ep,
         data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"})
-    return json.load(urllib.request.urlopen(r))
+    return json.load(open_with_rate_limit_retry(r))
 
 def uuid(s):
     s = s.replace("-", "")
@@ -100,7 +116,7 @@ def local_image(src, block_id):
     os.makedirs(OUT_IMG, exist_ok=True)
     try:
         req = urllib.request.Request(src, headers={"User-Agent": "Mozilla/5.0"})
-        data = urllib.request.urlopen(req).read()
+        data = open_with_rate_limit_retry(req).read()
         with open(path, "wb") as f: f.write(data)
         ref = f"{IMG_PUBLIC_PREFIX}/{name}"
         downloaded[src] = ref

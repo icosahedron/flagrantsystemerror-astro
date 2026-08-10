@@ -88,37 +88,25 @@ from a sub-path (e.g. a GitHub Pages project site), also set `base`.
 
 ## Authoring in Notion
 
-You can still write in Notion and import. Two scripts talk to the public Notion API
-(no auth needed) and discover pages live from the posts database under the root
-page, so a page you just created is picked up automatically. Run both from the repo
-root:
+Write posts in Notion, then build the site from the repo root with:
 
 ```bash
-python3 scripts/notion-export.py     # writes new posts to src/content/blog/ + images
-python3 scripts/fetch-covers.py      # adds each post's cover + icon to its frontmatter
-npm run build                        # the new post now appears everywhere
+just
 ```
 
-- **`scripts/notion-export.py`** converts each Notion page to Markdown and downloads
-  its inline images. By default it **only writes posts that don't already exist**, so
-  re-running after adding one Notion page touches just that page and leaves your
-  edited files alone. Pass `--force` to re-export everything, or a slug fragment
-  (e.g. `python3 scripts/notion-export.py kubernetes`) to target specific posts.
-- **`scripts/fetch-covers.py`** downloads each page's cover into
-  `public/images/covers/` and writes `heroImage`, `heroImagePosition`, and `icon`
-  into the frontmatter. Re-running refreshes those fields for every post.
+`just` needs `fd`, `verso`, and `recto` on `PATH`, plus a local checkout of the
+source code linked as `code/` (for example, `ln -s /path/to/roguelike code`).
 
-Slugs of already-published posts are pinned in each script's `SLUG_OVERRIDE` map so
-existing URLs keep working; new pages get a slug from their title. Day-to-day you
-don't need these — a plain Markdown file works just as well.
+The workflow stages Notion exports in `/tmp/fse-notion`, downloads images and cover
+metadata, then weaves annotated Lean and C fragments into posts under
+`src/content/blog/`. The response lists used by `verso` and `recto` are generated
+automatically and remain local. A Notion rate limit pauses the import before retrying.
 
 ### Adding a page you created in Notion
 
 1. Create and fill in the page in your Notion posts database.
-2. `python3 scripts/notion-export.py` — the new page is discovered and written to
-   `src/content/blog/<slug>.md`; existing posts are skipped.
-3. `python3 scripts/fetch-covers.py` — pulls its cover and icon into the frontmatter.
-4. `npm run dev` to preview, then `npm run build` to publish.
+2. Run `just` to import, weave, and build it.
+3. Run `npm run dev` to preview the generated post if needed.
 
 ## How the Notion look works
 

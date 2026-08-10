@@ -27,3 +27,10 @@ pnpm-debug.log*
 
 # agent stuff
 .agent-container
+
+# local source checkout (often a symlink)
+code
+
+# literate programming residue
+verso.lst
+recto.lst

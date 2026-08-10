@@ -2,11 +2,11 @@
 """Fetch each post's Notion page cover image and inject heroImage +
 heroImagePosition into the corresponding Markdown frontmatter. Idempotent:
 re-running replaces the same fields. Bodies are left untouched."""
-import json, os, re, sys, urllib.request, urllib.parse, hashlib
+import json, os, re, sys, time, urllib.error, urllib.request, urllib.parse, hashlib
 
 OUT_IMG = "public/images/covers"
 IMG_PREFIX = "/images/covers"
-BLOG_DIR = "src/content/blog"
+BLOG_DIR = os.environ.get("BLOG_DIR", "src/content/blog")
 
 # Same slug pinning the exporter uses, so covers land on the right files.
 SLUG_OVERRIDE = {
@@ -21,11 +21,27 @@ SLUG_OVERRIDE = {
 DEMO = ("Next.js Notion Starter Kit", "Example article",
         "Example page using a custom slug", "Flagrant System Error")
 
+def open_with_rate_limit_retry(request):
+    for attempt in range(6):
+        try:
+            return urllib.request.urlopen(request)
+        except urllib.error.HTTPError as error:
+            if error.code != 429 or attempt == 5:
+                raise
+            retry_after = error.headers.get("Retry-After") if error.headers else None
+            try:
+                delay = max(0.0, float(retry_after))
+            except (TypeError, ValueError):
+                delay = 60.0
+            error.close()
+            print(f"Notion rate-limited; retrying in {delay:g}s", file=sys.stderr)
+            time.sleep(delay)
+
 def api(ep, p):
     r = urllib.request.Request("https://www.notion.so/api/v3/" + ep,
         data=json.dumps(p).encode(),
         headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"})
-    return json.load(urllib.request.urlopen(r))
+    return json.load(open_with_rate_limit_retry(r))
 
 def uuid(s):
     s = s.replace("-", "")
@@ -53,7 +69,9 @@ def download(url, key):
     name = hashlib.md5(key.encode()).hexdigest()[:12] + ext
     os.makedirs(OUT_IMG, exist_ok=True)
     path = os.path.join(OUT_IMG, name)
-    data = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})).read()
+    data = open_with_rate_limit_retry(
+        urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    ).read()
     open(path, "wb").write(data)
     return f"{IMG_PREFIX}/{name}", len(data)
 
