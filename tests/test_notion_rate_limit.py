@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -29,6 +30,16 @@ def rate_limit_error(retry_after=None):
 
 
 class NotionRateLimitTests(unittest.TestCase):
+    def test_fetch_covers_honors_content_directory_overrides(self):
+        with patch.dict(os.environ, {
+            "BLOG_DIR": "/tmp/fse-notion/blog",
+            "PAGES_DIR": "/tmp/fse-notion/pages",
+        }):
+            module = load_script("fetch-covers.py")
+
+        self.assertEqual(module.BLOG_DIR, "/tmp/fse-notion/blog")
+        self.assertEqual(module.PAGES_DIR, "/tmp/fse-notion/pages")
+
     def test_api_retries_429_after_retry_after_delay(self):
         for script_name in SCRIPTS:
             with self.subTest(script=script_name):

@@ -1,9 +1,12 @@
 ---
 title: "About"
 pubDate: 2024-11-24
-updatedDate: 2025-12-03
+updatedDate: 2026-08-24
 description: "My name is Jay Kint."
-notionLastEdited: "2025-12-03T16:51:00.056000+00:00"
+notionLastEdited: "2026-08-24T05:18:38.930000+00:00"
+heroImage: "/images/covers/582b8bf9d8bd.jpg"
+heroImagePosition: 0.3667
+icon: "👋"
 ---
 My name is Jay Kint.
 
@@ -54,8 +57,6 @@ Below are some quotes I find inspirational:
 
 > “Use AI, not too much, mostly to connect with the intelligence of other human beings, not AI.”
 > — Dan Cohen, paraphrasing Michael Pollan
-
-
 
 
 

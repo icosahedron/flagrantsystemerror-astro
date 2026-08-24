@@ -7,7 +7,7 @@ default: build
 # Retrieve the current Notion pages into a persistent staging directory.
 notion:
     OUT_MD={{ notion_dir }}/blog OUT_PAGES={{ notion_dir }}/pages python3 scripts/notion-export.py
-    BLOG_DIR={{ notion_dir }}/blog python3 scripts/fetch-covers.py
+    BLOG_DIR={{ notion_dir }}/blog PAGES_DIR={{ notion_dir }}/pages python3 scripts/fetch-covers.py
 
 [private]
 check-tools:

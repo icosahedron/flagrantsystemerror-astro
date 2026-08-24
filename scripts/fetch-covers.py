@@ -7,6 +7,7 @@ import json, os, re, sys, time, urllib.error, urllib.request, urllib.parse, hash
 OUT_IMG = "public/images/covers"
 IMG_PREFIX = "/images/covers"
 BLOG_DIR = os.environ.get("BLOG_DIR", "src/content/blog")
+PAGES_DIR = os.environ.get("PAGES_DIR", "src/content/pages")
 
 # Same slug pinning the exporter uses, so covers land on the right files.
 SLUG_OVERRIDE = {
@@ -152,7 +153,7 @@ def main():
     # Standalone pages.
     for pid, name in [("148786cf-a010-81c2-b3a0-fc4b046a0351", "about"),
                       ("148786cf-a010-8033-9b06-ee70f38ecb9d", "colophon")]:
-        path = os.path.join("src/content/pages", name + ".md")
+        path = os.path.join(PAGES_DIR, name + ".md")
         if os.path.exists(path):
             process(pid, path)
 
