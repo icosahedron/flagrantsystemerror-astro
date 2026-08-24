@@ -1,10 +1,10 @@
 ---
 title: "Lean Roguelike (Part 1)"
 pubDate: 2026-06-06
-updatedDate: 2026-08-10
+updatedDate: 2026-08-24
 description: "To better learn the applicability of formal methods in general for application development, I’m attempting to write small roguelike using Lean."
-public: false
-notionLastEdited: "2026-08-10T06:42:45.803000+00:00"
+public: true
+notionLastEdited: "2026-08-24T23:59:06.760000+00:00"
 heroImage: "/images/covers/cc92f9c7c83c.png"
 heroImagePosition: 0.5
 icon: "🕹️"
@@ -73,4 +73,4 @@ Who knows, this may turn out to be an effort that results in me learning that Le
 
 This will *not* be written by AI. **No AI generated code will be used**. 
 
-AI *will* be used in a teaching capacity, much like Google or Stack Overflow. Pure questions and answers, but no huge copypasta code chunks.
+AI *will* be used in a teaching capacity, much like Google or Stack Overflow. Pure questions and answers, but no copy/pasting code chunks.

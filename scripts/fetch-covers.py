@@ -70,10 +70,15 @@ def download(url, key):
     name = hashlib.md5(key.encode()).hexdigest()[:12] + ext
     os.makedirs(OUT_IMG, exist_ok=True)
     path = os.path.join(OUT_IMG, name)
+    if os.path.isfile(path):
+        size = os.path.getsize(path)
+        if size > 0:
+            return f"{IMG_PREFIX}/{name}", size
     data = open_with_rate_limit_retry(
         urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     ).read()
-    open(path, "wb").write(data)
+    with open(path, "wb") as cover_file:
+        cover_file.write(data)
     return f"{IMG_PREFIX}/{name}", len(data)
 
 def set_frontmatter(path, hero, pos, icon):

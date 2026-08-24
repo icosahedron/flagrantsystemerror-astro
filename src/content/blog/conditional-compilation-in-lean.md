@@ -1,10 +1,13 @@
 ---
 title: "Conditional Compilation in Lean"
 pubDate: 2026-08-13
-updatedDate: 2026-08-17
+updatedDate: 2026-08-24
 description: "Conditional compilation is a handy tool to have for programming. It can select platform-specific code, development instrumentation, alternate implementations…"
-public: false
-notionLastEdited: "2026-08-17T05:39:26.948000+00:00"
+public: true
+notionLastEdited: "2026-08-24T23:58:04.083000+00:00"
+heroImage: "/images/covers/506cd3a4492e.jpg"
+heroImagePosition: 0.1
+icon: "🔍"
 ---
 Conditional compilation is a handy tool to have for programming. It can select platform-specific code, development instrumentation, alternate implementations, or—as in my case—different parts of a tutorial project.
 
@@ -132,3 +135,9 @@ Lean’s metaprogramming facilities have earned it high praise as the “[perfec
 This is only a small taste of Lean’s metaprogramming. There’s an [entire book](https://leanprover-community.github.io/lean4-metaprogramming-book/) related to it, but this sample is pretty tantalizing.
 
 Given how much I still have to learn about Lean, I don’t think I’ll be touching on metaprogramming until much later in this project, if at all, but it’s good to know it’s there.
+
+:::callout{icon="🤖"}
+
+This article and code were authored by me, with proofreading and editorial suggestions by AI.
+
+:::

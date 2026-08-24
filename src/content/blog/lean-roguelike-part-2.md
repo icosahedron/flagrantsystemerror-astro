@@ -1,10 +1,10 @@
 ---
 title: "Lean Roguelike (Part 2)"
 pubDate: 2026-08-05
-updatedDate: 2026-08-24
+updatedDate: 2026-08-26
 description: "We start with very simple ambitions."
-public: false
-notionLastEdited: "2026-08-24T04:52:20.129000+00:00"
+public: true
+notionLastEdited: "2026-08-26T01:57:14.963000+00:00"
 heroImage: "/images/covers/1dfe6a5e1404.png"
 heroImagePosition: 0.0776
 icon: "⚔️"
@@ -115,15 +115,14 @@ lean_terminal_restore(lean_obj_arg world)
 {
     (void)world;
 
-    if (!original_termios_saved) {
-        return lean_io_result_mk_ok(lean_box(0));
-    }
+    /* Restore kernel TTY state. */
+    if (original_termios_saved) {
+        if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios) == -1) {
+            return io_error_from_errno("tcsetattr");
+        }
 
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios) == -1) {
-        return io_error_from_errno("tcsetattr");
+        original_termios_saved = 0;
     }
-
-    original_termios_saved = 0;
 
     return lean_io_result_mk_ok(lean_box(0));
 }
@@ -131,7 +130,7 @@ lean_terminal_restore(lean_obj_arg world)
 
 Since we’re linking C code, we’ll need to change our build configuration a bit.
 
-Besideds a `lakefile.toml` file, Lean can use its own language to describe builds, which is required when linking C code.
+Besides a `lakefile.toml` file, Lean can use its own language to describe builds, which is required when linking C code.
 
 Delete (or rename) the `lakefile.toml` file since it will no longer be used.
 
@@ -190,9 +189,17 @@ lean_exe «rogue» where
   moreLinkObjs := #[terminal.o]
 ```
 
+Hopefully the build script is not inscrutable. There is some additional code here not directly related to the C linking. My article [Conditional Compilation in Lean](/conditional-compilation-in-lean/) explains more about Lean build scripts. Email me if you wish me to write a more detailed explanation of this file (see the About page for my email address). 
+
 Now to expose these functions to Lean so we can call them. Our `Main.lean` should now look like:
 
 ```bash
+@[extern "lean_terminal_enable_raw"]
+opaque enableRawMode : IO Unit
+
+@[extern "lean_terminal_restore"]
+opaque restoreTermios : IO Unit
+
 if_section = 1
 def main : IO Unit :=
   IO.println s!"Hello, world!"
@@ -205,9 +212,7 @@ There are a few things to unpack in the Lean code:
 
 - The lack of parameters mean that the C functions take `void`, and `IO Unit` return values are the Lean equivalent to C’s `void`.
 
-- `namespace` and `end` introduce a namespace. 
-
-If this is your first exposure to Lean, then don’t worry about the above statements. It’s early to really be introducing these concepts. 
+If this is your first exposure to Lean, then don’t worry about the above statements. It’s early to be introducing these concepts, but we need them since Lean’s standard library doesn’t have this functionality
 
 Use `lake exe main` to build the program. This should just output `Hello, world!` .
 
@@ -221,12 +226,65 @@ We will use ESC codes to
 
 - Clear the screen
 
-- Move the cursor to a specific location
-
 - Print a message
+
+- Wait for a key press
+
+- Restore the screen and terminal state
 
 Here are the functions that will be using.
 
-```bash
+```haskell
+def restoreTerminal : IO Unit := do
+  let stdout ← IO.getStdout
+  -- Restore the original screen.
+  stdout.putStr "\x1b[?1049l"
+  stdout.putStr "\x1b[?25h"
+  stdout.putStr "\x1b[0m"
+  stdout.flush
+  restoreTermios
 
+def switchScreen : IO Unit := do
+  let stdout ← IO.getStdout
+  -- switch to the alternate screen
+  stdout.putStr "\x1b[?1049h\x1b[2J\x1b[H"
+  stdout.putStr "\x1b[?25l"
+  stdout.flush
+
+def initTerminal : IO Bool := do
+  enableRawMode
+  switchScreen
+
+  return true
+
+def waitForKey : IO Unit := do
+  let stdin ← IO.getStdin
+  let _ ← stdin.read 1
 ```
+
+These functions just send escape codes to the terminal via `stdout`, nothing fancy.
+
+Couple this with a new `Main` function, and we can see the terminal in action.
+
+Running this with `lake exe main` and you should see the screen clear, `Hello, world (press any key)` in the upper left corner. Press a key and it should return to the prompt.
+
+```haskell
+if_section = 2
+def main : IO Unit := do
+  let _ ← initTerminal
+  IO.println s!"Hello, world (press any key)"
+  waitForKey
+  restoreTerminal
+```
+
+Running this with `lake exe main` and you should see the screen clear, `Hello, world` in the upper left corner. Press a key and it should return to the prompt.
+
+## Up Next
+
+We’ll continue with our prototype with the terminal, moving a `@` around the screen.
+
+:::callout{icon="🤖"}
+
+This article and code were authored by me, with proofreading and editorial suggestions by AI.
+
+:::

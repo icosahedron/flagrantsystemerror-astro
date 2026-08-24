@@ -2,6 +2,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
@@ -30,6 +31,62 @@ def rate_limit_error(retry_after=None):
 
 
 class NotionRateLimitTests(unittest.TestCase):
+    def test_fetch_covers_reuses_a_nonempty_cached_file(self):
+        module = load_script("fetch-covers.py")
+        url = "https://example.com/cover.jpg"
+        key = "page-id-and-cover-reference"
+
+        with tempfile.TemporaryDirectory() as directory:
+            module.OUT_IMG = directory
+            name = module.hashlib.md5(key.encode()).hexdigest()[:12] + ".jpg"
+            cached = Path(directory) / name
+            cached.write_bytes(b"cached image")
+
+            with patch.object(
+                module.urllib.request,
+                "urlopen",
+                side_effect=AssertionError("network requested for cached cover"),
+            ):
+                hero, size = module.download(url, key)
+
+        self.assertEqual(hero, f"{module.IMG_PREFIX}/{name}")
+        self.assertEqual(size, len(b"cached image"))
+
+    def test_fetch_covers_replaces_an_empty_cached_file(self):
+        module = load_script("fetch-covers.py")
+        url = "https://example.com/cover.jpg"
+        key = "page-id-and-cover-reference"
+        response = unittest.mock.MagicMock()
+        response.read.return_value = b"fresh image"
+
+        with tempfile.TemporaryDirectory() as directory:
+            module.OUT_IMG = directory
+            name = module.hashlib.md5(key.encode()).hexdigest()[:12] + ".jpg"
+            cached = Path(directory) / name
+            cached.touch()
+
+            with patch.object(module.urllib.request, "urlopen", return_value=response):
+                hero, size = module.download(url, key)
+
+            self.assertEqual(cached.read_bytes(), b"fresh image")
+
+        self.assertEqual(hero, f"{module.IMG_PREFIX}/{name}")
+        self.assertEqual(size, len(b"fresh image"))
+
+    def test_rich_rewrites_known_internal_notion_page_links(self):
+        module = load_script("notion-export.py")
+        page_id = "3bb786cfa01080e78d4ec4a96b8b7368"
+        module.INTERNAL_PAGE_URLS = {page_id: "/conditional-compilation-in-lean/"}
+
+        self.assertEqual(
+            module.rich([["Conditional Compilation in Lean", [["a", f"/p/{page_id}?pvs=25"]]]]),
+            "[Conditional Compilation in Lean](/conditional-compilation-in-lean/)",
+        )
+        self.assertEqual(
+            module.rich([["Lean", [["a", "https://lean-lang.org"]]]]),
+            "[Lean](https://lean-lang.org)",
+        )
+
     def test_fetch_covers_honors_content_directory_overrides(self):
         with patch.dict(os.environ, {
             "BLOG_DIR": "/tmp/fse-notion/blog",

@@ -7,6 +7,7 @@ OUT_MD  = os.environ.get("OUT_MD",  "src/content/blog")
 OUT_IMG = os.environ.get("OUT_IMG", "public/images/posts")
 OUT_PAGES = os.environ.get("OUT_PAGES", "src/content/pages")
 IMG_PUBLIC_PREFIX = "/images/posts"   # how markdown references images
+INTERNAL_PAGE_URLS = {}
 
 def open_with_rate_limit_retry(request):
     for attempt in range(6):
@@ -52,6 +53,12 @@ def load_page(pid):
     return blocks
 
 # ---------- rich text ----------
+def local_link(url):
+    match = re.fullmatch(r"/p/([0-9a-f]{32})(?:\?.*)?", url, re.I)
+    if not match:
+        return url
+    return INTERNAL_PAGE_URLS.get(match.group(1).lower(), url)
+
 def rich(arr):
     if not arr: return ""
     out = []
@@ -87,7 +94,7 @@ def rich(arr):
                 if strike: core = f"~~{core}~~"
                 t = f"{lead}{core}{trail}"
         if link:
-            t = f"[{t}]({link})"
+            t = f"[{t}]({local_link(link)})"
         out.append(t)
     return "".join(out)
 
@@ -386,8 +393,18 @@ def main():
     only = next((a for a in args if not a.startswith("-")), None)
 
     post_ids, pubid = discover_post_ids()
+    post_metadata = {pid: fetch_meta(pid) for pid in post_ids}
+    INTERNAL_PAGE_URLS.update({
+        pid.replace("-", ""): f"/{SLUG_OVERRIDE.get(title, slugify(title))}/"
+        for pid, (title, _) in post_metadata.items()
+        if slugify(title) not in DEMO
+    })
+    INTERNAL_PAGE_URLS.update({
+        "148786cfa01081c2b3a0fc4b046a0351": "/about/",
+        "148786cfa01080339b06ee70f38ecb9d": "/colophon/",
+    })
     for pid in post_ids:
-        title, edited_ms = fetch_meta(pid)
+        title, edited_ms = post_metadata[pid]
         if slugify(title) in DEMO:
             continue
         slug = SLUG_OVERRIDE.get(title, slugify(title))
