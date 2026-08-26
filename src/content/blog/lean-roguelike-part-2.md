@@ -200,7 +200,6 @@ opaque enableRawMode : IO Unit
 @[extern "lean_terminal_restore"]
 opaque restoreTermios : IO Unit
 
-if_section = 1
 def main : IO Unit :=
   IO.println s!"Hello, world!"
 ```
@@ -269,7 +268,6 @@ Couple this with a new `Main` function, and we can see the terminal in action.
 Running this with `lake exe main` and you should see the screen clear, `Hello, world (press any key)` in the upper left corner. Press a key and it should return to the prompt.
 
 ```haskell
-if_section = 2
 def main : IO Unit := do
   let _ ← initTerminal
   IO.println s!"Hello, world (press any key)"
