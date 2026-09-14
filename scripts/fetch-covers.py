@@ -144,8 +144,12 @@ def process(pid, path):
     raw = fmt.get("page_cover")
     # Only emoji icons are supported inline; image icons are skipped.
     icon = fmt.get("page_icon")
+    icon_state = "none"
     if icon and icon.startswith("http"):
+        icon_state = "remote-skipped"
         icon = None
+    elif icon:
+        icon_state = f"present({icon})"
     hero = pos = None
     cover_state = "no"
     if raw:
@@ -157,7 +161,7 @@ def process(pid, path):
         pos = fmt.get("page_cover_position")
         cover_state = "cached" if cached else "downloaded"
     set_frontmatter(path, hero, pos, icon)
-    print(f"  {os.path.basename(path):40} icon={icon!s:4} pos={pos!s:6} cover={cover_state}")
+    print(f"  {os.path.basename(path):40} icon={icon_state:20} pos={pos!s:6} cover={cover_state}")
 
 ROOT = "148786cf-a010-80f9-824f-f694cae70443"
 

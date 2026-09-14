@@ -120,7 +120,10 @@ class NotionRateLimitTests(unittest.TestCase):
 
         def page_response(raw):
             return {"recordMap": {"block": {module.uuid(pid): {
-                "value": {"value": {"format": {"page_cover": raw}}},
+                "value": {"value": {"format": {
+                    "page_cover": raw,
+                    "page_icon": "🧪",
+                }}},
             }}}}
 
         with tempfile.TemporaryDirectory() as directory:
@@ -144,8 +147,30 @@ class NotionRateLimitTests(unittest.TestCase):
             post_contents = post.read_text(encoding="utf-8")
 
         self.assertIn("heroImage:", post_contents)
+        self.assertIn("icon=present(🧪)", first_output.getvalue())
         self.assertIn("cover=downloaded", first_output.getvalue())
+        self.assertIn("icon=present(🧪)", second_output.getvalue())
         self.assertIn("cover=cached", second_output.getvalue())
+
+    def test_fetch_covers_reports_remote_icons_as_skipped(self):
+        module = load_script("fetch-covers.py")
+        pid = "12345678123412341234123456789012"
+
+        with tempfile.TemporaryDirectory() as directory:
+            module.OUT_IMG = directory
+            post = Path(directory) / "post.md"
+            post.write_text("---\ntitle: Post\npubDate: 2026-01-01\n---\n", encoding="utf-8")
+            response = {"recordMap": {"block": {module.uuid(pid): {
+                "value": {"value": {"format": {
+                    "page_icon": "https://example.com/icon.png",
+                }}},
+            }}}}
+            output = io.StringIO()
+            with patch.object(module, "api", return_value=response), redirect_stdout(output):
+                module.process(pid, post)
+
+        self.assertIn("icon=remote-skipped", output.getvalue())
+        self.assertIn("cover=no", output.getvalue())
 
     def test_image_writes_do_not_leave_a_partial_cache_file(self):
         for script_name in SCRIPTS:
