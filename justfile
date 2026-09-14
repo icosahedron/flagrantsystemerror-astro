@@ -29,7 +29,7 @@ knit: check-tools
     #!/usr/bin/env bash
     set -euo pipefail
     repo_root="$(pwd -P)"
-    stage={{ notion_dir }}
+    stage="$repo_root/{{ notion_dir }}"
     mkdir -p "$stage"
     fd -e lean -e c -a -t f . "$repo_root/code" > "$stage/verso.lst"
     [[ -s "$stage/verso.lst" ]] || { echo 'No source files found under code/' >&2; exit 1; }

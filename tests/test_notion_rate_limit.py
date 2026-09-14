@@ -1,6 +1,8 @@
+import io
 import importlib.util
 import json
 import os
+from contextlib import redirect_stdout
 from pathlib import Path
 import tempfile
 import unittest
@@ -39,18 +41,19 @@ class NotionRateLimitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             module.OUT_IMG = directory
             name = module.hashlib.md5(key.encode()).hexdigest()[:12] + ".jpg"
-            cached = Path(directory) / name
-            cached.write_bytes(b"cached image")
+            cached_file = Path(directory) / name
+            cached_file.write_bytes(b"cached image")
 
             with patch.object(
                 module.urllib.request,
                 "urlopen",
                 side_effect=AssertionError("network requested for cached cover"),
             ):
-                hero, size = module.download(url, key)
+                hero, size, cached = module.download(url, key)
 
         self.assertEqual(hero, f"{module.IMG_PREFIX}/{name}")
         self.assertEqual(size, len(b"cached image"))
+        self.assertTrue(cached)
 
     def test_fetch_covers_replaces_an_empty_cached_file(self):
         module = load_script("fetch-covers.py")
@@ -62,16 +65,17 @@ class NotionRateLimitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             module.OUT_IMG = directory
             name = module.hashlib.md5(key.encode()).hexdigest()[:12] + ".jpg"
-            cached = Path(directory) / name
-            cached.touch()
+            cached_file = Path(directory) / name
+            cached_file.touch()
 
             with patch.object(module.urllib.request, "urlopen", return_value=response):
-                hero, size = module.download(url, key)
+                hero, size, cached = module.download(url, key)
 
-            self.assertEqual(cached.read_bytes(), b"fresh image")
+            self.assertEqual(cached_file.read_bytes(), b"fresh image")
 
         self.assertEqual(hero, f"{module.IMG_PREFIX}/{name}")
         self.assertEqual(size, len(b"fresh image"))
+        self.assertFalse(cached)
 
     def test_fetch_covers_ignores_expiring_s3_query_parameters_in_cache_key(self):
         module = load_script("fetch-covers.py")
@@ -94,15 +98,17 @@ class NotionRateLimitTests(unittest.TestCase):
             key1 = "page-id" + module.canonical_source(first)
             key2 = "page-id" + module.canonical_source(second)
             with patch.object(module.urllib.request, "urlopen", return_value=response):
-                first_ref, first_size = module.download(first, key1)
+                first_ref, first_size, first_cached = module.download(first, key1)
             with patch.object(
                 module.urllib.request,
                 "urlopen",
                 side_effect=AssertionError("network requested for signed URL refresh"),
             ):
-                second_ref, second_size = module.download(second, key2)
+                second_ref, second_size, second_cached = module.download(second, key2)
 
         self.assertEqual((second_ref, second_size), (first_ref, first_size))
+        self.assertFalse(first_cached)
+        self.assertTrue(second_cached)
 
     def test_fetch_covers_process_reuses_cache_when_s3_signature_changes(self):
         module = load_script("fetch-covers.py")
@@ -123,17 +129,23 @@ class NotionRateLimitTests(unittest.TestCase):
             post.write_text("---\ntitle: Post\npubDate: 2026-01-01\n---\n", encoding="utf-8")
             with patch.object(module, "api", return_value=page_response(first)), \
                  patch.object(module.urllib.request, "urlopen", return_value=response):
-                module.process(pid, post)
+                first_output = io.StringIO()
+                with redirect_stdout(first_output):
+                    module.process(pid, post)
             with patch.object(module, "api", return_value=page_response(second)), \
                  patch.object(
                      module.urllib.request,
                      "urlopen",
                      side_effect=AssertionError("network requested for signed URL refresh"),
                  ):
-                module.process(pid, post)
+                second_output = io.StringIO()
+                with redirect_stdout(second_output):
+                    module.process(pid, post)
             post_contents = post.read_text(encoding="utf-8")
 
         self.assertIn("heroImage:", post_contents)
+        self.assertIn("cover=downloaded", first_output.getvalue())
+        self.assertIn("cover=cached", second_output.getvalue())
 
     def test_image_writes_do_not_leave_a_partial_cache_file(self):
         for script_name in SCRIPTS:

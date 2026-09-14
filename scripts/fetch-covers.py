@@ -105,7 +105,7 @@ def download(url, key, legacy_key=None):
         if os.path.isfile(path):
             size = os.path.getsize(path)
             if size > 0:
-                return f"{IMG_PREFIX}/{name}", size
+                return f"{IMG_PREFIX}/{name}", size, True
     os.makedirs(OUT_IMG, exist_ok=True)
     data = open_with_rate_limit_retry(
         urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -113,7 +113,7 @@ def download(url, key, legacy_key=None):
     name = hashlib.md5(key.encode()).hexdigest()[:12] + ext
     path = os.path.join(OUT_IMG, name)
     write_atomically(path, data)
-    return f"{IMG_PREFIX}/{name}", len(data)
+    return f"{IMG_PREFIX}/{name}", len(data), False
 
 def set_frontmatter(path, hero, pos, icon):
     s = open(path, encoding="utf-8").read()
@@ -147,15 +147,17 @@ def process(pid, path):
     if icon and icon.startswith("http"):
         icon = None
     hero = pos = None
+    cover_state = "no"
     if raw:
-        hero, _ = download(
+        hero, _, cached = download(
             cover_src(raw, uuid(pid)),
             f"{pid}{canonical_source(raw)}",
             legacy_key=f"{pid}{raw}",
         )
         pos = fmt.get("page_cover_position")
+        cover_state = "cached" if cached else "downloaded"
     set_frontmatter(path, hero, pos, icon)
-    print(f"  {os.path.basename(path):40} icon={icon!s:4} pos={pos!s:6} cover={'yes' if hero else 'no'}")
+    print(f"  {os.path.basename(path):40} icon={icon!s:4} pos={pos!s:6} cover={cover_state}")
 
 ROOT = "148786cf-a010-80f9-824f-f694cae70443"
 
