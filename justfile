@@ -1,6 +1,6 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 
-notion_dir := "/tmp/fse-notion"
+notion_dir := ".notion-cache"
 
 default: build
 

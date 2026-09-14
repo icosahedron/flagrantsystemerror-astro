@@ -2,7 +2,7 @@
 """Fetch each post's Notion page cover image and inject heroImage +
 heroImagePosition into the corresponding Markdown frontmatter. Idempotent:
 re-running replaces the same fields. Bodies are left untouched."""
-import json, os, re, sys, time, urllib.error, urllib.request, urllib.parse, hashlib
+import json, os, re, sys, time, urllib.error, urllib.request, urllib.parse, hashlib, tempfile
 
 OUT_IMG = "public/images/covers"
 IMG_PREFIX = "/images/covers"
@@ -63,22 +63,56 @@ def cover_src(raw, pid):
         return raw + "&w=1600"
     return raw
 
-def download(url, key):
+def canonical_source(src):
+    """Return a stable source identity for URLs with expiring signatures."""
+    parsed = urllib.parse.urlsplit(src)
+    host = (parsed.hostname or "").lower()
+    if "amazonaws.com" in host or "notion-static" in host:
+        volatile = {
+            "x-amz-algorithm", "x-amz-credential", "x-amz-date",
+            "x-amz-expires", "x-amz-security-token", "x-amz-signature",
+            "x-amz-signedheaders", "awsaccesskeyid", "expires",
+            "securitytoken", "signature",
+        }
+        query = urllib.parse.urlencode([
+            (key, value)
+            for key, value in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+            if key.lower() not in volatile
+        ])
+        return urllib.parse.urlunsplit(
+            (parsed.scheme, parsed.netloc, parsed.path, query, "")
+        )
+    return src
+
+def write_atomically(path, data):
+    with tempfile.NamedTemporaryFile(dir=OUT_IMG, delete=False) as image_file:
+        image_file.write(data)
+        temporary_path = image_file.name
+    try:
+        os.replace(temporary_path, path)
+    finally:
+        if os.path.exists(temporary_path):
+            os.unlink(temporary_path)
+
+def download(url, key, legacy_key=None):
     ext = ".jpg"
     m = re.search(r"\.(png|jpe?g|gif|webp)", url.lower())
     if m: ext = "." + m.group(1).replace("jpeg", "jpg")
-    name = hashlib.md5(key.encode()).hexdigest()[:12] + ext
+    keys = [key] if legacy_key in (None, key) else [key, legacy_key]
+    for candidate in keys:
+        name = hashlib.md5(candidate.encode()).hexdigest()[:12] + ext
+        path = os.path.join(OUT_IMG, name)
+        if os.path.isfile(path):
+            size = os.path.getsize(path)
+            if size > 0:
+                return f"{IMG_PREFIX}/{name}", size
     os.makedirs(OUT_IMG, exist_ok=True)
-    path = os.path.join(OUT_IMG, name)
-    if os.path.isfile(path):
-        size = os.path.getsize(path)
-        if size > 0:
-            return f"{IMG_PREFIX}/{name}", size
     data = open_with_rate_limit_retry(
         urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     ).read()
-    with open(path, "wb") as cover_file:
-        cover_file.write(data)
+    name = hashlib.md5(key.encode()).hexdigest()[:12] + ext
+    path = os.path.join(OUT_IMG, name)
+    write_atomically(path, data)
     return f"{IMG_PREFIX}/{name}", len(data)
 
 def set_frontmatter(path, hero, pos, icon):
@@ -114,7 +148,11 @@ def process(pid, path):
         icon = None
     hero = pos = None
     if raw:
-        hero, _ = download(cover_src(raw, uuid(pid)), f"{pid}{raw}")
+        hero, _ = download(
+            cover_src(raw, uuid(pid)),
+            f"{pid}{canonical_source(raw)}",
+            legacy_key=f"{pid}{raw}",
+        )
         pos = fmt.get("page_cover_position")
     set_frontmatter(path, hero, pos, icon)
     print(f"  {os.path.basename(path):40} icon={icon!s:4} pos={pos!s:6} cover={'yes' if hero else 'no'}")

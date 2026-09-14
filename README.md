@@ -97,10 +97,14 @@ just
 `just` needs `fd`, `verso`, and `recto` on `PATH`, plus a local checkout of the
 source code linked as `code/` (for example, `ln -s /path/to/roguelike code`).
 
-The workflow stages Notion exports in `/tmp/fse-notion`, downloads images and cover
-metadata, then weaves annotated Lean and C fragments into posts under
-`src/content/blog/`. The response lists used by `verso` and `recto` are generated
-automatically and remain local. A Notion rate limit pauses the import before retrying.
+The workflow stages Notion exports in the local `.notion-cache/` directory,
+downloads images and cover metadata, then weaves annotated Lean and C fragments
+into posts under `src/content/blog/`. The staging data and downloaded images are
+reused on later runs and survive reboots; the directory is ignored by Git. The
+response lists used by `verso` and `recto` are generated automatically and remain
+local. Existing images cached under expired signed URLs may refresh once after this
+change, then reuse the stable cache. A Notion rate limit pauses the import before
+retrying.
 
 ### Adding a page you created in Notion
 

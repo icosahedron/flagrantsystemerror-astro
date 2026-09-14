@@ -34,3 +34,6 @@ code
 # literate programming residue
 verso.lst
 recto.lst
+
+# local Notion export/cache data
+.notion-cache/

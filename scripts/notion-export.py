@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Export Flagrant System Error Notion posts -> Markdown + local images."""
-import json, os, re, sys, time, urllib.error, urllib.request, urllib.parse, hashlib, collections, datetime
+import json, os, re, sys, time, urllib.error, urllib.request, urllib.parse, hashlib, collections, datetime, tempfile
 
 ROOT = "148786cf-a010-80f9-824f-f694cae70443"
 OUT_MD  = os.environ.get("OUT_MD",  "src/content/blog")
@@ -103,8 +103,40 @@ def title_of(v):
 
 # ---------- image handling ----------
 downloaded = {}
+def canonical_source(src):
+    """Return a stable source identity for URLs with expiring signatures."""
+    parsed = urllib.parse.urlsplit(src)
+    host = (parsed.hostname or "").lower()
+    if "amazonaws.com" in host or "notion-static" in host:
+        volatile = {
+            "x-amz-algorithm", "x-amz-credential", "x-amz-date",
+            "x-amz-expires", "x-amz-security-token", "x-amz-signature",
+            "x-amz-signedheaders", "awsaccesskeyid", "expires",
+            "securitytoken", "signature",
+        }
+        query = urllib.parse.urlencode([
+            (key, value)
+            for key, value in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+            if key.lower() not in volatile
+        ])
+        return urllib.parse.urlunsplit(
+            (parsed.scheme, parsed.netloc, parsed.path, query, "")
+        )
+    return src
+
+def write_atomically(path, data):
+    with tempfile.NamedTemporaryFile(dir=OUT_IMG, delete=False) as image_file:
+        image_file.write(data)
+        temporary_path = image_file.name
+    try:
+        os.replace(temporary_path, path)
+    finally:
+        if os.path.exists(temporary_path):
+            os.unlink(temporary_path)
+
 def local_image(src, block_id):
     if not src: return None
+    original_src = src
     # Raw S3 URLs are expired, and newer `attachment:<id>:<name>` refs aren't
     # URLs at all; both resolve through Notion's signing proxy, keyed to the
     # owning block id. This is what react-notion-x does.
@@ -118,13 +150,24 @@ def local_image(src, block_id):
     ext = ".png"
     m = re.search(r"\.(png|jpe?g|gif|webp|svg)", src.lower())
     if m: ext = "." + m.group(1).replace("jpeg", "jpg")
-    name = hashlib.md5((block_id + src).encode()).hexdigest()[:12] + ext
-    path = os.path.join(OUT_IMG, name)
+    keys = [block_id + canonical_source(original_src)]
+    legacy_key = block_id + src
+    if legacy_key != keys[0]:
+        keys.append(legacy_key)
+    for key in keys:
+        name = hashlib.md5(key.encode()).hexdigest()[:12] + ext
+        path = os.path.join(OUT_IMG, name)
+        if os.path.isfile(path) and os.path.getsize(path) > 0:
+            ref = f"{IMG_PUBLIC_PREFIX}/{name}"
+            downloaded[src] = ref
+            return ref
     os.makedirs(OUT_IMG, exist_ok=True)
     try:
         req = urllib.request.Request(src, headers={"User-Agent": "Mozilla/5.0"})
         data = open_with_rate_limit_retry(req).read()
-        with open(path, "wb") as f: f.write(data)
+        name = hashlib.md5(keys[0].encode()).hexdigest()[:12] + ext
+        path = os.path.join(OUT_IMG, name)
+        write_atomically(path, data)
         ref = f"{IMG_PUBLIC_PREFIX}/{name}"
         downloaded[src] = ref
         print(f"    img {len(data)//1024}KB -> {ref}", file=sys.stderr)

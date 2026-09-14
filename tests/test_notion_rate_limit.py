@@ -73,6 +73,81 @@ class NotionRateLimitTests(unittest.TestCase):
         self.assertEqual(hero, f"{module.IMG_PREFIX}/{name}")
         self.assertEqual(size, len(b"fresh image"))
 
+    def test_fetch_covers_ignores_expiring_s3_query_parameters_in_cache_key(self):
+        module = load_script("fetch-covers.py")
+        first = "https://s3.us-east-1.amazonaws.com/bucket/cover.png?X-Amz-Date=one"
+        second = "https://s3.us-east-1.amazonaws.com/bucket/cover.png?X-Amz-Date=two"
+        versioned = "https://s3.us-east-1.amazonaws.com/bucket/cover.png?version=two"
+
+        self.assertEqual(module.canonical_source(first), module.canonical_source(second))
+        self.assertNotEqual(module.canonical_source(first), module.canonical_source(versioned))
+
+    def test_fetch_covers_reuses_cache_when_s3_signature_changes(self):
+        module = load_script("fetch-covers.py")
+        first = "https://s3.us-east-1.amazonaws.com/bucket/cover.png?X-Amz-Date=one"
+        second = "https://s3.us-east-1.amazonaws.com/bucket/cover.png?X-Amz-Date=two"
+        response = unittest.mock.MagicMock()
+        response.read.return_value = b"cached cover"
+
+        with tempfile.TemporaryDirectory() as directory:
+            module.OUT_IMG = directory
+            key1 = "page-id" + module.canonical_source(first)
+            key2 = "page-id" + module.canonical_source(second)
+            with patch.object(module.urllib.request, "urlopen", return_value=response):
+                first_ref, first_size = module.download(first, key1)
+            with patch.object(
+                module.urllib.request,
+                "urlopen",
+                side_effect=AssertionError("network requested for signed URL refresh"),
+            ):
+                second_ref, second_size = module.download(second, key2)
+
+        self.assertEqual((second_ref, second_size), (first_ref, first_size))
+
+    def test_fetch_covers_process_reuses_cache_when_s3_signature_changes(self):
+        module = load_script("fetch-covers.py")
+        pid = "12345678123412341234123456789012"
+        first = "https://s3.us-east-1.amazonaws.com/bucket/cover.png?X-Amz-Date=one"
+        second = "https://s3.us-east-1.amazonaws.com/bucket/cover.png?X-Amz-Date=two"
+        response = unittest.mock.MagicMock()
+        response.read.return_value = b"cached cover"
+
+        def page_response(raw):
+            return {"recordMap": {"block": {module.uuid(pid): {
+                "value": {"value": {"format": {"page_cover": raw}}},
+            }}}}
+
+        with tempfile.TemporaryDirectory() as directory:
+            module.OUT_IMG = directory
+            post = Path(directory) / "post.md"
+            post.write_text("---\ntitle: Post\npubDate: 2026-01-01\n---\n", encoding="utf-8")
+            with patch.object(module, "api", return_value=page_response(first)), \
+                 patch.object(module.urllib.request, "urlopen", return_value=response):
+                module.process(pid, post)
+            with patch.object(module, "api", return_value=page_response(second)), \
+                 patch.object(
+                     module.urllib.request,
+                     "urlopen",
+                     side_effect=AssertionError("network requested for signed URL refresh"),
+                 ):
+                module.process(pid, post)
+            post_contents = post.read_text(encoding="utf-8")
+
+        self.assertIn("heroImage:", post_contents)
+
+    def test_image_writes_do_not_leave_a_partial_cache_file(self):
+        for script_name in SCRIPTS:
+            with self.subTest(script=script_name):
+                module = load_script(script_name)
+                with tempfile.TemporaryDirectory() as directory:
+                    module.OUT_IMG = directory
+                    path = Path(directory) / "image.png"
+                    with patch.object(module.os, "replace", side_effect=OSError("interrupted")):
+                        with self.assertRaises(OSError):
+                            module.write_atomically(path, b"partial image")
+
+                    self.assertFalse(path.exists())
+
     def test_rich_rewrites_known_internal_notion_page_links(self):
         module = load_script("notion-export.py")
         page_id = "3bb786cfa01080e78d4ec4a96b8b7368"
@@ -86,6 +161,74 @@ class NotionRateLimitTests(unittest.TestCase):
             module.rich([["Lean", [["a", "https://lean-lang.org"]]]]),
             "[Lean](https://lean-lang.org)",
         )
+
+    def test_notion_export_reuses_a_nonempty_cached_image(self):
+        module = load_script("notion-export.py")
+        src = "https://example.com/diagram.png"
+        block_id = "block-id"
+
+        with tempfile.TemporaryDirectory() as directory:
+            module.OUT_IMG = directory
+            module.downloaded = {}
+            name = module.hashlib.md5((block_id + src).encode()).hexdigest()[:12] + ".png"
+            cached = Path(directory) / name
+            cached.write_bytes(b"cached image")
+
+            with patch.object(
+                module.urllib.request,
+                "urlopen",
+                side_effect=AssertionError("network requested for cached image"),
+            ):
+                ref = module.local_image(src, block_id)
+
+        self.assertEqual(ref, f"{module.IMG_PUBLIC_PREFIX}/{name}")
+
+    def test_notion_export_reuses_signed_s3_image_across_module_loads(self):
+        first_module = load_script("notion-export.py")
+        second_module = load_script("notion-export.py")
+        block_id = "block-id"
+        first = "https://s3.us-east-1.amazonaws.com/bucket/diagram.png?X-Amz-Date=one"
+        second = "https://s3.us-east-1.amazonaws.com/bucket/diagram.png?X-Amz-Date=two"
+        response = unittest.mock.MagicMock()
+        response.read.return_value = b"cached image"
+
+        with tempfile.TemporaryDirectory() as directory:
+            first_module.OUT_IMG = directory
+            first_module.downloaded = {}
+            with patch.object(first_module.urllib.request, "urlopen", return_value=response):
+                first_ref = first_module.local_image(first, block_id)
+
+            second_module.OUT_IMG = directory
+            second_module.downloaded = {}
+            with patch.object(
+                second_module.urllib.request,
+                "urlopen",
+                side_effect=AssertionError("network requested for signed URL refresh"),
+            ):
+                second_ref = second_module.local_image(second, block_id)
+
+        self.assertEqual(second_ref, first_ref)
+
+    def test_notion_export_replaces_an_empty_cached_image(self):
+        module = load_script("notion-export.py")
+        src = "https://example.com/diagram.png"
+        block_id = "block-id"
+        response = unittest.mock.MagicMock()
+        response.read.return_value = b"fresh image"
+
+        with tempfile.TemporaryDirectory() as directory:
+            module.OUT_IMG = directory
+            module.downloaded = {}
+            name = module.hashlib.md5((block_id + src).encode()).hexdigest()[:12] + ".png"
+            cached = Path(directory) / name
+            cached.touch()
+
+            with patch.object(module.urllib.request, "urlopen", return_value=response):
+                ref = module.local_image(src, block_id)
+
+            self.assertEqual(cached.read_bytes(), b"fresh image")
+
+        self.assertEqual(ref, f"{module.IMG_PUBLIC_PREFIX}/{name}")
 
     def test_fetch_covers_honors_content_directory_overrides(self):
         with patch.dict(os.environ, {
