@@ -4,7 +4,7 @@ pubDate: 2026-08-05
 updatedDate: 2026-08-26
 description: "We start with very simple ambitions."
 public: true
-notionLastEdited: "2026-08-26T01:57:14.963000+00:00"
+notionLastEdited: "2026-08-26T02:38:08.060000+00:00"
 heroImage: "/images/covers/1dfe6a5e1404.png"
 heroImagePosition: 0.0776
 icon: "⚔️"
@@ -211,7 +211,7 @@ There are a few things to unpack in the Lean code:
 
 - The lack of parameters mean that the C functions take `void`, and `IO Unit` return values are the Lean equivalent to C’s `void`.
 
-If this is your first exposure to Lean, then don’t worry about the above statements. It’s early to be introducing these concepts, but we need them since Lean’s standard library doesn’t have this functionality
+If this is your first exposure to Lean, then don’t worry about the above statements. It’s early to be introducing these concepts, but we need them since Lean’s standard library doesn’t have this functionality.
 
 Use `lake exe main` to build the program. This should just output `Hello, world!` .
 
@@ -222,8 +222,6 @@ We want to actually use these functions though, and do some additional things wi
 We will use ESC codes to
 
 - Switch screens
-
-- Clear the screen
 
 - Print a message
 
