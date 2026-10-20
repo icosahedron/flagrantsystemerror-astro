@@ -4,7 +4,7 @@ pubDate: 2026-08-29
 updatedDate: 2026-10-20
 description: "Welcome back. We’ll continue our journey with a little more terminal work, focusing on rudimentary input and output."
 public: true
-notionLastEdited: "2026-10-20T05:42:20.127000+00:00"
+notionLastEdited: "2026-10-20T06:34:19.828000+00:00"
 heroImage: "/images/covers/2a0faf6738d0.png"
 heroImagePosition: 1
 icon: "💻"
@@ -13,27 +13,27 @@ Welcome back. We’ll continue our journey with a little more terminal work, foc
 
 Before getting to that, I found someone else who is of like mind with Lean and AI generated code. They are actually building a product interface around Lean. Hope it succeeds.
 
-‣
+[LeanDB: A strongly typed SQL Frontend | Theoric](https://theoric.com/blog/drafts/leandb_a_strongly_typed_sql_frontend/)
 
-‣
+[Why am I betting on Lean 4 for agentic coding? | Theoric](https://theoric.com/blog/why-lean-4-for-agentic-coding/)
 
 This is also a good article about how Lean’s proof obligations create more sound software written by AI.
 
-‣
+[A Type System Is a Search Oracle](https://hiraditya.github.io/posts/a-type-system-is-a-search-oracle/?utm_source=tldrnewsletter)
 
 And this person has created a “provable infrastructure” with Lean.
 
-‣
+[Like Terraform, but in Lean 4](https://ngrislain.github.io/blog/2026-9-6-like-terraform-but-in-lean-4/)
 
-Last, but not least, someone implemented the *RealWorld* reference web application written in Lean 4.
+Last, but not least, someone implemented the *RealWorld* reference web application in Lean 4.
 
-‣
+[I built the RealWorld app in Lean 4](https://leangineer.com/blog/realworld-in-lean/)
 
 ## Crossterm
 
 I would prefer to get on with the game, so I decided to incorporate a cross platform terminal library rather than writing one from scratch in Lean. I chose [Crossterm](https://github.com/crossterm-rs/crossterm#feature-flags) since it’s precisely that, cross platform, has a well structured event stream for input, and support for window resizing, mouse input, etc.
 
-I figured it would also be a good opportunity to showcase Lean Foreign Function Interface (FFI).
+I figured it would also be a good opportunity to showcase the Lean Foreign Function Interface (FFI).
 
 For a small test, we’ll using this very basic functionality:
 

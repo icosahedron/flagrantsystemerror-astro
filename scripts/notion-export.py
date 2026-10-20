@@ -78,6 +78,14 @@ def rich(arr):
             elif k == "s": strike = True
             elif k == "c": code = True
             elif k == "a": link = f[1]
+            elif k == "lm":
+                # Link mentions store their label and URL in the annotation;
+                # the segment text itself is only Notion's placeholder glyph.
+                mention = f[1]
+                link = mention.get("href")
+                label = mention.get("title") or link
+                if label:
+                    text = re.sub(r"([\\`*_{\[\]}<>])", r"\\\1", label)
         t = text
         if code:
             t = f"`{t}`"

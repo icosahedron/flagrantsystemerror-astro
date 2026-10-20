@@ -199,6 +199,32 @@ class NotionRateLimitTests(unittest.TestCase):
             "[Lean](https://lean-lang.org)",
         )
 
+    def test_rich_renders_link_mentions_inline_with_formatting(self):
+        module = load_script("notion-export.py")
+        mention = {"href": "https://example.com/article", "title": "An article"}
+        self.assertEqual(
+            module.rich([["Read "], ["‣", [["lm", mention], ["b"]]], [" today."]]),
+            "Read [**An article**](https://example.com/article) today.",
+        )
+        self.assertEqual(
+            module.render_blocks(["block"], {"block": {
+                "type": "text", "properties": {"title": [["‣", [["lm", mention]]]]},
+            }}),
+            ["[An article](https://example.com/article)", ""],
+        )
+
+    def test_rich_link_mentions_escape_labels_and_fall_back_to_url(self):
+        module = load_script("notion-export.py")
+        for title, label in [("A [typed] *API*", r"A \[typed\] \*API\*"), ("", "https://example.com"), (None, "https://example.com")]:
+            with self.subTest(title=title):
+                mention = {"href": "https://example.com", "title": title}
+                self.assertEqual(module.rich([["‣", [["lm", mention]]]]), f"[{label}](https://example.com)")
+        module.INTERNAL_PAGE_URLS = {"a" * 32: "/local-post/"}
+        self.assertEqual(
+            module.rich([["‣", [["lm", {"href": "/p/" + "a" * 32, "title": "Post"}]]]]),
+            "[Post](/local-post/)",
+        )
+
     def test_notion_export_reuses_a_nonempty_cached_image(self):
         module = load_script("notion-export.py")
         src = "https://example.com/diagram.png"
