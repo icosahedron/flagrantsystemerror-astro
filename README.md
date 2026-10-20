@@ -112,6 +112,53 @@ retrying.
 2. Run `just` to import, weave, and build it.
 3. Run `npm run dev` to preview the generated post if needed.
 
+### Including custom HTML in a Notion page
+
+Notion can't hold arbitrary HTML, so keep the snippet in the repo and have `recto`
+splice it in. Put the file under `embeds/`, then add a plain paragraph to the
+Notion page containing only:
+
+```
+@=embeds/my-snippet.html
+```
+
+`just knit` copies `embeds/` into `.notion-cache/` before weaving (`recto` only
+accepts relative paths without `..`, resolved from the stage), and the line is
+replaced with the file's contents verbatim. Astro passes raw HTML in Markdown
+through unchanged, with two caveats:
+
+- `<script>` tags in Markdown are not bundled, so they can't `import` npm
+  packages. Load libraries from a CDN or from `public/`.
+- Stylesheets linked from the snippet land in the page body. To get CSS into
+  `<head>`, import it in `src/layouts/Layout.astro` instead.
+- The post body is a column flexbox with `align-items: flex-start`, so a block
+  that sizes itself from its container (such as a player in an empty `<div>`)
+  collapses to almost nothing. Give the snippet's outer element
+  `style="width: 100%"`.
+
+Keep paths free of `_` and `*`, which Notion's Markdown export may escape.
+
+#### Example: an asciinema terminal recording
+
+The player's CSS is already imported in `src/layouts/Layout.astro` from the
+`asciinema-player` npm package. Put the recording at `public/casts/demo.cast`
+and create `embeds/asciinema-demo.html`:
+
+```html
+<div id="cast-demo" style="width: 100%"></div>
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.17.0/dist/bundle/asciinema-player.min.js"></script>
+<script>
+  AsciinemaPlayer.create('/casts/demo.cast', document.getElementById('cast-demo'), {
+    idleTimeLimit: 2,
+  });
+</script>
+```
+
+Keep the CDN version in step with the `asciinema-player` version in
+`package.json` so the script matches the bundled CSS. Then add
+`@=embeds/asciinema-demo.html` to the Notion page and run `just`. Use a unique
+element `id` per recording if a post embeds more than one.
+
 ## How the Notion look works
 
 The styling comes from the `react-notion-x` stylesheet, vendored as

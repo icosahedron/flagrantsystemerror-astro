@@ -35,6 +35,10 @@ knit: check-tools
     [[ -s "$stage/verso.lst" ]] || { echo 'No source files found under code/' >&2; exit 1; }
     (
         cd "$stage"
+        # recto resolves @= paths relative to the stage, so mirror the tracked
+        # embeds/ directory here before weaving.
+        rm -rf embeds
+        [[ -d "$repo_root/embeds" ]] && cp -R "$repo_root/embeds" embeds
         fd -e md -t f . blog > recto.lst
         [[ -s recto.lst ]] || { echo 'No staged blog posts found under' "$stage/blog" >&2; exit 1; }
         verso "@$stage/verso.lst" | recto "$repo_root/src/content" @recto.lst
