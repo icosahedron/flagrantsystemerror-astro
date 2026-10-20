@@ -141,39 +141,41 @@ import Lake
 
 open System Lake DSL
 
-def ch : Nat :=
-  ((get_config? ch).bind String.toNat?).getD 0
+def chapter : Nat :=
+  ((get_config? ch).bind String.toNat?).getD 1
 
-def chapterFile : Lean.Name :=
-  s!"ch{ch}.Main".toName
+def chapterRoot : Lean.Name :=
+  s!"Main".toName
 
-def chapterConfigFile : Lean.Name :=
-    s!"ch{ch}.build.Config".toName
+def chapterConfigRoot : Lean.Name :=
+  s!"build.Config".toName
 
-def tutorial.section : Nat :=
-  ((get_config? tutorial.section).bind String.toNat?).getD 0
+def chapterTerminal : Lean.Name :=
+  s!"Term".toName
+
+def tutorialSection : Nat :=
+  ((get_config? sect).bind String.toNat?).getD 1
 
 package «rogue» where
-  srcDir := "src"
+  srcDir := "."
   leanOptions := #[
-    ⟨`weak.tutorial.section, .ofNat tutorial.section⟩
+    ⟨`weak.tutorial.section, .ofNat tutorialSection⟩
   ]
 
 lean_lib chapterConfig where
-  roots := #[chapterConfigFile]
+  roots := #[chapterConfigRoot]
+
+lean_lib chapterTerm where
+  roots := #[chapterTerminal]
 
 input_file terminal.c where
-  path := "src" / ("ch" ++ toString ch) / "c" / "terminal.c"
+  path := "c" / "terminal.c"
   text := true
 
 target terminal.o pkg : FilePath := do
   let srcJob ← terminal.c.fetch
   let objectFile := pkg.buildDir / "c" / "terminal.o"
-
-  let weakArgs := #[
-    "-I",
-    (← getLeanIncludeDir).toString
-  ]
+  let weakArgs := #["-I", (← getLeanIncludeDir).toString]
 
   buildO
     objectFile
@@ -185,7 +187,7 @@ target terminal.o pkg : FilePath := do
 
 @[default_target]
 lean_exe «rogue» where
-  root := chapterFile
+  root := chapterRoot
   moreLinkObjs := #[terminal.o]
 ```
 

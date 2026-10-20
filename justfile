@@ -31,7 +31,7 @@ knit: check-tools
     repo_root="$(pwd -P)"
     stage="$repo_root/{{ notion_dir }}"
     mkdir -p "$stage"
-    fd -e lean -e c -a -t f . "$repo_root/code" > "$stage/verso.lst"
+    fd -e lean -e c -e rs -a -t f . "$repo_root/code" > "$stage/verso.lst"
     [[ -s "$stage/verso.lst" ]] || { echo 'No source files found under code/' >&2; exit 1; }
     (
         cd "$stage"
