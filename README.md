@@ -112,6 +112,23 @@ retrying.
 2. Run `just` to import, weave, and build it.
 3. Run `npm run dev` to preview the generated post if needed.
 
+### Comments become footnotes
+
+An unresolved comment on text in a Notion post is published as a Markdown
+footnote: a superscript number after the commented text, with the comment (and
+any replies) listed at the bottom of the post. Resolve the comment in Notion to
+remove it from the site, so review notes stay private once handled. Only
+comments on selected text are exported; comments on a whole block or page are
+not.
+
+Adding or resolving a comment doesn't change the page's edit time, so a plain
+`just` skips the post. Force a re-export of that post, then build:
+
+```bash
+just notion --force lean-roguelike-part-3   # any part of the slug works
+just
+```
+
 ### Including custom HTML in a Notion page
 
 Notion can't hold arbitrary HTML, so keep the snippet in the repo and have `recto`

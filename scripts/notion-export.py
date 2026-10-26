@@ -8,6 +8,11 @@ OUT_IMG = os.environ.get("OUT_IMG", "public/images/posts")
 OUT_PAGES = os.environ.get("OUT_PAGES", "src/content/pages")
 IMG_PUBLIC_PREFIX = "/images/posts"   # how markdown references images
 INTERNAL_PAGE_URLS = {}
+# Unresolved Notion comment threads on the page being exported, keyed by
+# discussion id -> list of comment rich-text arrays. Rendered as footnotes;
+# FOOTNOTES records them in order of first reference.
+DISCUSSIONS = {}
+FOOTNOTES = []
 
 def open_with_rate_limit_retry(request):
     for attempt in range(6):
@@ -36,8 +41,10 @@ def uuid(s):
     return f"{s[0:8]}-{s[8:12]}-{s[12:16]}-{s[16:20]}-{s[20:32]}"
 
 def load_page(pid):
-    """Return {block_id: value} for a page, following chunk cursor."""
+    """Return {block_id: value} for a page, following chunk cursor. Also fills
+    DISCUSSIONS with the page's unresolved comment threads."""
     blocks = {}
+    discussions, comments = {}, {}
     cursor = {"stack": []}
     for _ in range(20):
         d = api("loadPageChunk", {"pageId": uuid(pid), "limit": 100,
@@ -47,10 +54,35 @@ def load_page(pid):
             v = rec.get("value", {})
             v = v.get("value", v)  # some shapes nest under value.value
             blocks[bid] = v
+        discussions.update({k: bval(r) for k, r in d["recordMap"].get("discussion", {}).items()})
+        comments.update({k: bval(r) for k, r in d["recordMap"].get("comment", {}).items()})
         cursor = d.get("cursor", {})
         if not cursor.get("stack"):
             break
+    DISCUSSIONS.clear()
+    for did, disc in discussions.items():
+        if disc.get("resolved"):
+            continue  # resolving a comment in Notion unpublishes it
+        texts = [comments[c]["text"] for c in disc.get("comments", [])
+                 if c in comments and comments[c].get("alive", True) and comments[c].get("text")]
+        if texts:
+            DISCUSSIONS[did] = texts
     return blocks
+
+def footnote_ref(did):
+    """Markdown footnote reference for a comment thread, numbered on first use."""
+    if did not in FOOTNOTES:
+        FOOTNOTES.append(did)
+    return f"[^comment-{FOOTNOTES.index(did) + 1}]"
+
+def render_footnotes():
+    """Footnote definitions for every comment thread referenced on the page.
+    Replies in a thread become further paragraphs of the same footnote."""
+    lines = []
+    for n, did in enumerate(FOOTNOTES, 1):
+        paras = [rich(t).replace("\n", " ") for t in DISCUSSIONS[did]]
+        lines.append(f"[^comment-{n}]: " + "\n\n    ".join(paras))
+    return lines
 
 # ---------- rich text ----------
 def local_link(url):
@@ -62,49 +94,60 @@ def local_link(url):
 def rich(arr):
     if not arr: return ""
     out = []
-    for seg in arr:
-        text = seg[0]
-        fmts = seg[1] if len(seg) > 1 else []
-        # inline equation: marker char carries an ["e", latex] format
-        eq = next((f[1] for f in (fmts or []) if f[0] == "e"), None)
-        if eq is not None:
-            out.append(f"${eq}$")
-            continue
-        link = None; code = bold = ital = strike = False
-        for f in fmts or []:
-            k = f[0]
-            if k == "b": bold = True
-            elif k == "i": ital = True
-            elif k == "s": strike = True
-            elif k == "c": code = True
-            elif k == "a": link = f[1]
-            elif k == "lm":
-                # Link mentions store their label and URL in the annotation;
-                # the segment text itself is only Notion's placeholder glyph.
-                mention = f[1]
-                link = mention.get("href")
-                label = mention.get("title") or link
-                if label:
-                    text = re.sub(r"([\\`*_{\[\]}<>])", r"\\\1", label)
-        t = text
-        if code:
-            t = f"`{t}`"
-        elif bold or ital or strike:
-            # Notion often includes trailing/leading spaces inside a styled run
-            # (e.g. "Figure 1, " bold). CommonMark won't close markers that hug
-            # whitespace, so keep the spaces outside the markers.
-            lead = t[: len(t) - len(t.lstrip())]
-            trail = t[len(t.rstrip()):]
-            core = t.strip()
-            if core:
-                if bold: core = f"**{core}**"
-                if ital: core = f"*{core}*"
-                if strike: core = f"~~{core}~~"
-                t = f"{lead}{core}{trail}"
-        if link:
-            t = f"[{t}]({local_link(link)})"
-        out.append(t)
+    # Comment threads anchor with an ["m", discussion_id] format on every
+    # segment they cover; place the footnote after the last one.
+    last_seg = {f[1]: i for i, seg in enumerate(arr) if len(seg) > 1
+                for f in (seg[1] or []) if f[0] == "m" and f[1] in DISCUSSIONS}
+    for i, seg in enumerate(arr):
+        refs = "".join(footnote_ref(d) for d, j in last_seg.items() if j == i)
+        t = rich_segment(seg)
+        # Selections often include a trailing space; attach the reference to
+        # the word, not to the start of the next one.
+        core = t.rstrip()
+        out.append(core + refs + t[len(core):])
     return "".join(out)
+
+def rich_segment(seg):
+    text = seg[0]
+    fmts = seg[1] if len(seg) > 1 else []
+    # inline equation: marker char carries an ["e", latex] format
+    eq = next((f[1] for f in (fmts or []) if f[0] == "e"), None)
+    if eq is not None:
+        return f"${eq}$"
+    link = None; code = bold = ital = strike = False
+    for f in fmts or []:
+        k = f[0]
+        if k == "b": bold = True
+        elif k == "i": ital = True
+        elif k == "s": strike = True
+        elif k == "c": code = True
+        elif k == "a": link = f[1]
+        elif k == "lm":
+            # Link mentions store their label and URL in the annotation;
+            # the segment text itself is only Notion's placeholder glyph.
+            mention = f[1]
+            link = mention.get("href")
+            label = mention.get("title") or link
+            if label:
+                text = re.sub(r"([\\`*_{\[\]}<>])", r"\\\1", label)
+    t = text
+    if code:
+        t = f"`{t}`"
+    elif bold or ital or strike:
+        # Notion often includes trailing/leading spaces inside a styled run
+        # (e.g. "Figure 1, " bold). CommonMark won't close markers that hug
+        # whitespace, so keep the spaces outside the markers.
+        lead = t[: len(t) - len(t.lstrip())]
+        trail = t[len(t.rstrip()):]
+        core = t.strip()
+        if core:
+            if bold: core = f"**{core}**"
+            if ital: core = f"*{core}*"
+            if strike: core = f"~~{core}~~"
+            t = f"{lead}{core}{trail}"
+    if link:
+        t = f"[{t}]({local_link(link)})"
+    return t
 
 def title_of(v):
     return "".join(s[0] for s in v.get("properties", {}).get("title", [[""]]) if s)
@@ -304,7 +347,11 @@ def export_page(pid, slug_hint=None):
                 root = v; break
     title = title_of(root)
     content_ids = root.get("content", [])
-    body = "\n".join(render_blocks(content_ids, blocks)).rstrip() + "\n"
+    FOOTNOTES.clear()
+    lines = render_blocks(content_ids, blocks)
+    if FOOTNOTES:
+        lines += render_footnotes()  # render_blocks already ends with a blank line
+    body = "\n".join(lines).rstrip() + "\n"
     return title, body, root
 
 def ymd(ms):

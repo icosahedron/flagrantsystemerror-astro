@@ -5,8 +5,9 @@ notion_dir := ".notion-cache"
 default: build
 
 # Retrieve the current Notion pages into a persistent staging directory.
-notion:
-    OUT_MD={{ notion_dir }}/blog OUT_PAGES={{ notion_dir }}/pages python3 scripts/notion-export.py
+# Arguments pass through to the exporter, e.g. `just notion --force part-3`.
+notion *args:
+    OUT_MD={{ notion_dir }}/blog OUT_PAGES={{ notion_dir }}/pages python3 scripts/notion-export.py {{ args }}
     BLOG_DIR={{ notion_dir }}/blog PAGES_DIR={{ notion_dir }}/pages python3 scripts/fetch-covers.py
 
 [private]
